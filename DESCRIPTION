@@ -1,0 +1,11 @@
+Package: abcboost
+Type: Package
+Title: R wrapper for ABCBoost
+Version: 1.0.0
+Date: 2022-05-06
+Author: Ping Li and Weijie Zhao
+Maintainer: Ping Li (pingli98@gmail.com) and Weijie Zhao <zhaoweijie12@gmail.com>
+Description: ABCBoost is a high-performance gradient boosting library for adaptive base class training.
+License: Apache-2.0
+Depends: R (>= 2.14), Matrix
+Collate: abcboost.R
