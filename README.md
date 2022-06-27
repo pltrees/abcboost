@@ -337,7 +337,7 @@ To enable GPU, make sure we have supported CUDA devices and CUDA toolkit install
 
 ## Reference Papers
 * Li, Ping. "ABC-Boost: Adaptive Base Class Boost for Multi-Class Classification." _ICML_ 2009.
-* Li, Ping. "Robust LogitBoost and Adaptive Base Class (ABC) LogitBoost." _arXiv preprint arXiv:1203.3491_ 2012.
+* Li, Ping. "Robust LogitBoost and Adaptive Base Class (ABC) LogitBoost." _UAI_ 2010.
 * Li, Ping and Zhao, Weijie. "Fast ABC-Boost: A Unified Framework for Selecting the Base Class in Multi-Class Classification." _arXiv preprint arXiv:2205.10927_ 2022.
 ## Copyright and License
 ABCBoost is provided under the Apache-2.0 license.
