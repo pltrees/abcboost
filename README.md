@@ -191,21 +191,21 @@ testY <- data[,1]
 # We use n_threads as an example
 # All command line supported parameters can be passed via list: 
 # list(parameter1=value1, parameter2=value2,...)
-model <- abcboost_train(Y,X,"abcrobustlogit",10,20,0.1,3,0,list(n_threads=1))
+model <- abcboost_train(Y,X,"abcrobustlogit",100,20,0.1,3,0,list(n_threads=1))
 # abcboost_save_model(model,'mymodel.model')
 # model <- abcboost_load_model('mymodel.model')
 res <- abcboost_test(testY,testX,model)
 # We also provide a method to read libsvm format data into sparse array
 data <- abcboost_read_libsvm('data/zip.train.libsvm')
-X = data$X
-Y = data$Y
+X <- data$X
+Y <- data$Y
 data <- abcboost_read_libsvm('data/zip.train.libsvm')
 testX <- data$X
 testY <- data$Y
 # X can be a either a dense matrix or a sparse matrix
 # The interface is the same as the dense case, 
 # but with better performance for sparse data
-model <- abcboost_train(Y,X,"abcrobustlogit",10,20,0.1,3,0,list(n_threads=1))
+model <- abcboost_train(Y,X,"abcrobustlogit",100,20,0.1,3,0,list(n_threads=1))
 res <- abcboost_test(testY,testX,model)
 ```
 
@@ -232,7 +232,7 @@ params.n_threads = 1;
 % The params argument is optional. 
 % We use n_threads as an example
 % All command line supported parameters can be passed via params: params.parameter_name = value
-model = abcboost_train(Y,X,'abcrobustlogit',10,20,0.1,1,0,params);
+model = abcboost_train(Y,X,'abcrobustlogit',100,20,0.1,1,0,params);
 % abcboost_save(model,'mymodel.model');
 % model = abcboost_load('mymodel.model');
 res = abcboost_test(testY,testX,model);
@@ -240,16 +240,17 @@ res = abcboost_test(testY,testX,model);
 % For example, we included the libsvmread.c from the LIBSVM package for data loading
 % We need to compile it before actual usage:
 % mex libsvmread.c  
-[Y, X] = libsvmread('../../data/zip.train.csv');
-[testY, testX] = libsvmread('../../data/zip.train.csv');
+[Y, X] = libsvmread('../../data/zip.train.libsvm');
+[testY, testX] = libsvmread('../../data/zip.train.libsvm');
 % Here X and testX are sparse matrices
-model = abcboost_train(Y,X,'abcrobustlogit',10,20,0.1,1,0,params);
+model = abcboost_train(Y,X,'abcrobustlogit',100,20,0.1,1,0,params);
 res = abcboost_test(testY,testX,model);
 ```
 
 ## Python Support
 We provide the python support through `pybind11`.
-Before the compilation, `pybind11` should be installed, e.g., `pip3 install pybind11`.
+Before the compilation, `pybind11` should be installed, e.g., 
+`pip3 install pybind11`
 
 To compile:
 ```
@@ -271,24 +272,24 @@ data = np.genfromtxt('data/zip.test.csv',delimiter=',').astype(float)
 testY = data[:,0]
 testX = data[:,1:]
 import abcboost
-model = abcboost.train(Y,X,'abcrobustlogit',10,20,0.1,3,0)
+model = abcboost.train(Y,X,'abcrobustlogit',100,20,0.1,3,0)
 # All command line supported parameters can be passed as optional keyword arguments
 # For example:
-# model = abcboost.train(Y,X,'abcrobustlogit',10,20,0.1,3,0,n_threads=1)
+# model = abcboost.train(Y,X,'abcrobustlogit',100,20,0.1,3,0,n_threads=1)
 res = abcboost.test(Y,X,model)
 # abcboost.save(model,'mymodel.model')
 # model = abcboost.load('mymodel.model')
 res = abcboost.test(testY,testX,model)
 # Alternatively, we also support libsvm-format sparse matrix
 # We use sklearn to load libsvm format data as a scipy.sparse matrix
-# sklearn can be installed as: pip install -U scikit-learn
+# sklearn can be installed as: pip3 install -U scikit-learn
 import sklearn
 import sklearn.datasets
 # X is a scipy.sparse matrix
 [X, Y] = sklearn.datasets.load_svmlight_file('data/zip.train.libsvm')
 [testX, testY] = sklearn.datasets.load_svmlight_file('data/zip.train.libsvm')
 # The training and testing interfaces are unified for both dense and sparse matrices
-model = abcboost.train(Y,X,'abcrobustlogit',10,20,0.1,3,0)
+model = abcboost.train(Y,X,'abcrobustlogit',100,20,0.1,3,0)
 res = abcboost.test(testY,testX,model)
 ```
 
