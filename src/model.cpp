@@ -41,12 +41,14 @@
 
 
 namespace ABCBoost {
+
+#ifndef OS_WIN
 #pragma omp declare reduction(vec_double_plus : std::vector<double> : \
   std::transform( \
     omp_out.begin(), omp_out.end(), \
     omp_in.begin(), omp_out.begin(), std::plus<double>())) \
   initializer(omp_priv = omp_orig)
-
+#endif
 // =============================================================================
 //
 // Gradient Boosting
@@ -1593,7 +1595,9 @@ double ABCMart::getLoss() {
   //for (int i = 0; i < class_losses.size(); ++i) class_losses[i] = 0;
  
   std::vector<double> local_class_losses(class_losses.size());
+#ifndef OS_WIN
   #pragma omp parallel for reduction(+: loss) reduction(vec_double_plus: local_class_losses)
+#endif
   for (int i = 0; i < data->n_data; i++) {
     int y = int(data->Y[i]);
     if (y < 0) continue;

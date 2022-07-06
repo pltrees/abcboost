@@ -272,7 +272,7 @@ void Data::adaptiveQuantization() {
   }
 
 #pragma omp parallel for
-  for (unsigned int f = 0; f < valid_fi.size(); ++f) {
+  for (int f = 0; f < valid_fi.size(); ++f) {
     auto j = valid_fi[f];
     std::vector<double> fv = Xv_raw[j];
     for (const auto& pdata : data_pool) {
@@ -539,8 +539,10 @@ void Data::loadMemoryColumnMajorMatrix(double* Y_matrix, double* X_matrix,
       Y_global[t].push_back(Y_matrix[i]);
       for (int j = 0; j < n_col; ++j) {
         double j_val = X_matrix[j * n_row + i];
-        i_global[t][j].push_back(i);
-        v_global[t][j].push_back(j_val);
+        if (j_val != 0) {
+          i_global[t][j].push_back(i);
+          v_global[t][j].push_back(j_val);
+        }
       }
     }
 
@@ -639,8 +641,10 @@ void Data::loadMatrixFormat(std::string path) {
           i_global[t].resize(n_feats_local);
           v_global[t].resize(n_feats_local);
         }
-        i_global[t][j - 1].push_back(i);
-        v_global[t][j - 1].push_back(j_val);
+        if (j_val != 0) {
+          i_global[t][j - 1].push_back(i);
+          v_global[t][j - 1].push_back(j_val);
+        }
         j++;
       }
     }

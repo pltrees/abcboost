@@ -124,7 +124,8 @@ void* train(py::array_t<double> Y, py::object general_X, std::string model_name,
     fprintf(stderr, "Unsupported model name %s\n", config->model_name.c_str());
   }
 
-  config->mem_Y_matrix = static_cast<double *>(Y.request().ptr);
+  py::array_t<double> Ycopy = Y.attr("copy")();
+  config->mem_Y_matrix = static_cast<double *>(Ycopy.request().ptr);
   if(is_sparse){
     config->mem_X_kv = kvs;
     config->mem_is_sparse = true;
@@ -199,7 +200,8 @@ py::array_t<double> test(py::array_t<double> Y, py::object general_X, void* py_m
   ABCBoost::Config* config = model->getConfig();
   config->model_mode = "test";
 
-  config->mem_Y_matrix = (double*)Y.request().ptr;
+  py::array_t<double> Ycopy = Y.attr("copy")();
+  config->mem_Y_matrix = (double*)Ycopy.request().ptr;
   if(is_sparse){
     config->mem_X_kv = kvs;
     config->mem_is_sparse = true;

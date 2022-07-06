@@ -4,8 +4,14 @@ src/predict_main.cpp
 src/main.cpp
 src/matlab
 src/python_wrapper.cpp
+visualstudio/
+matlab/
+python/
 build/
 data/
+.*tar.gz
+.exe
+.git/
 .*.cmake
 .*Makefile
 train

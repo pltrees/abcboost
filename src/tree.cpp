@@ -36,6 +36,7 @@ inline HistBin csw_plus(const HistBin& a, const HistBin& b){
   return HistBin(a.count + b.count,a.sum + b.sum,a.weight + b.weight);
 }
 
+#ifndef OS_WIN
 #pragma omp declare reduction(vec_csw_plus :  std::vector<HistBin>: \
   std::transform( \
     omp_out.begin(), omp_out.end(), \
@@ -53,7 +54,7 @@ inline HistBin csw_plus(const HistBin& a, const HistBin& b){
     omp_out.begin(), omp_out.end(), \
     omp_in.begin(), omp_out.begin(), std::plus<int>())) \
   initializer(omp_priv = omp_orig)
-
+#endif
 /**
  * Constructor.
  * @param[in] data: Dataset to train on
@@ -97,15 +98,19 @@ inline void Tree::alignHessianResidual(const uint start,const uint end){
 inline void Tree::initUnobserved(const uint start,const uint end,double& r_unobserved, double& h_unobserved){
   const auto* H = hessian;
   const auto* R = residual;
+  double r = r_unobserved;
+  double h = h_unobserved;
   CONDITION_OMP_PARALLEL_FOR(
-    omp parallel for schedule(static) reduction(+: r_unobserved, h_unobserved),
+    omp parallel for schedule(static) reduction(+: r, h),
     config->use_omp == true && (end - start > 1024),
     for (int i = start; i < end; ++i) {
       auto id = ids[i];
-      r_unobserved += R[id];
-      h_unobserved += H[id];
+      r += R[id];
+      h += H[id];
     }
   )
+  r_unobserved = r;
+  h_unobserved = h;
 }
 
 
