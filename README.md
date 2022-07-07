@@ -116,11 +116,11 @@ The labels in the specified additional files are not used in the training. Only 
 * `-data_use_mean_as_missing`
 * `-data_min_bin_size` minimum size of the bin
 * `-data_sparsity_threshold`
-* `-data_max_n_bins` max number of bins (default 65535)
+* `-data_max_n_bins` max number of bins (default 1000)
 * `-data_path, -data` path to train/test data
 #### Tree related:
-* `-tree_clip_value` gradient clip (default 100)
-* `-tree_damping_factor`, regularization on numerator (default 1e-300)
+* `-tree_clip_value` gradient clip (default 50)
+* `-tree_damping_factor`, regularization on numerator (default 1e-30)
 * `-tree_max_n_leaves`, -J (default 20)
 * `-tree_min_node_size` (default 10)
 #### Model related:

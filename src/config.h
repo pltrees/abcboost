@@ -54,8 +54,8 @@ class Config {
 
   // Tree config
   bool tree_fast_bin_sort = false;
-  double tree_clip_value = 100;
-  double tree_damping_factor = 1e-300;
+  double tree_clip_value = 50;
+  double tree_damping_factor = 1e-30;
   int tree_max_n_leaves = 20;
   int tree_min_node_size = 10;
 
@@ -310,8 +310,8 @@ class Config {
 * `-data_max_n_bins` max number of bins (default 1000)\n\
 * `-data_path, -data` path to train/test data\n\
 #### Tree related:\n\
-* `-tree_clip_value` gradient clip (default 100)\n\
-* `-tree_damping_factor`, regularization on numerator (default 1e-300)\n\
+* `-tree_clip_value` gradient clip (default 50)\n\
+* `-tree_damping_factor`, regularization on numerator (default 1e-30)\n\
 * `-tree_max_n_leaves`, -J (default 20)\n\
 * `-tree_min_node_size` (default 10)\n\
 #### Model related:\n\
