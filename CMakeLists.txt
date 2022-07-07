@@ -13,7 +13,9 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
 file(GLOB SOURCE_FILES src/*.h src/*.cpp)
 
 option(CUDA "cuda" OFF)
-option(OMP "omp" OFF)
+option(OMP "omp" ON)
+
+add_definitions(-w)
 
 if (OMP)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DOMP -std=c++11 -fopenmp")

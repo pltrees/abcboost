@@ -18,6 +18,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <exception>
 
 #ifdef USE_MEX_CMD
 #include "mex.h"
@@ -55,7 +56,7 @@ class Config {
   bool tree_fast_bin_sort = false;
   double tree_clip_value = 100;
   double tree_damping_factor = 1e-300;
-  int tree_max_n_leaves = 4;
+  int tree_max_n_leaves = 20;
   int tree_min_node_size = 10;
 
   // Model config
@@ -64,7 +65,7 @@ class Config {
   bool model_use_weighted_update = true;
   double model_data_sample_rate = 1.0;
   double model_feature_sample_rate = 1.0;
-  double model_shrinkage = 0.08;
+  double model_shrinkage = 0.1;
   bool model_n_iter_cmd = false;
   int model_n_iterations = 1000;
   int model_more_iter = 0;
@@ -101,7 +102,7 @@ class Config {
   std::string additional_files = "";
   bool no_map = false;
   bool no_label = false;
-  double stop_tolerance = 1e-13;
+  double stop_tolerance = 2e-14;
   double regression_stop_factor = 1e-5;
 
 
@@ -303,48 +304,48 @@ class Config {
     printf(
         "ABCBoost usage:\n\
 #### Data related:\n\
-* `--data_use_mean_as_missing`\n\
-* `--data_min_bin_size` minimum size of the bin\n\
-* `--data_sparsity_threshold`\n\
-* `--data_max_n_bins` max number of bins (default 65535)\n\
-* `--data_path, -data` path to train/test data\n\
+* `-data_use_mean_as_missing`\n\
+* `-data_min_bin_size` minimum size of the bin\n\
+* `-data_sparsity_threshold`\n\
+* `-data_max_n_bins` max number of bins (default 1000)\n\
+* `-data_path, -data` path to train/test data\n\
 #### Tree related:\n\
-* `--tree_clip_value` gradient clip (default 100)\n\
-* `--tree_damping_factor`, regularization on numerator (default 1e-300)\n\
-* `--tree_max_n_leaves`, -J (default 4)\n\
-* `--tree_min_node_size` (default 10)\n\
+* `-tree_clip_value` gradient clip (default 100)\n\
+* `-tree_damping_factor`, regularization on numerator (default 1e-300)\n\
+* `-tree_max_n_leaves`, -J (default 20)\n\
+* `-tree_min_node_size` (default 10)\n\
 #### Model related:\n\
-* `--model_use_logit`, whether use logitboost\n\
-* `--model_data_sample_rate` (default 1.0)\n\
-* `--model_feature_sample_rate` (default 1.0)\n\
-* `--model_shrinkage`, `-shrinkage`, `-v`, the learning rate (default 0.08)\n\
-* `--model_n_iterations`, `-iter` (default 1000)\n\
-* `--model_save_every`, `-save` (default 500)\n\
-* `--model_eval_every`, `-eval` (default 1)\n\
-* `--model_name`, `-method` regression/lambdarank/mart/abcmart/robustlogit/abcrobustlogit (default abcrobustlogit)\n\
-* `--model_pretrained_path`, `-model`\n\
+* `-model_use_logit`, whether use logitboost\n\
+* `-model_data_sample_rate` (default 1.0)\n\
+* `-model_feature_sample_rate` (default 1.0)\n\
+* `-model_shrinkage`, `-shrinkage`, `-v`, the learning rate (default 0.1)\n\
+* `-model_n_iterations`, `-iter` (default 1000)\n\
+* `-model_save_every`, `-save` (default 500)\n\
+* `-model_eval_every`, `-eval` (default 1)\n\
+* `-model_name`, `-method` regression/lambdarank/mart/abcmart/robustlogit/abcrobustlogit (default abcrobustlogit)\n\
+* `-model_pretrained_path`, `-model`\n\
 #### Adaptive Base Class (ABC) related:\n\
-* `--model_base_candidate_size`, `base_candidates_size`, `-search`, base class searching size in abcmart/abcrobustlogit\n\
-* `--model_gap`, `-gap` (default 0) The gap between two base class searchings. For example, `--model_gap 2` means we will do the base class searching in iteration 1, 4, 6, ...\n\
-* `--model_warmup_iter`, `-warmup_iter` (default 0) the number of iterations that use normal boosting before ABC method kicks in. It might be helpful for datasets with a large number of classes when we only have a limited base class searching parameter (`-model_base_candidate_size`) \n\
-* `--model_warmup_use_logit`, `-warmup_use_logit` 0/1 (default 1) whether use logitboost in warmup iterations.\n\
-* `--model_abc_sample_rate`, `-abc_sample_rate` (default 1.0) the sample rate used for the base class searching\n\
-* `--model_abc_sample_min_data` `-abc_sample_min_data` (default 2000) the minimum sampled data for base class selection. This parameter only takes into effect when `--abc_sample_rate` is less than `1.0`\n\
+* `-model_base_candidate_size`, `base_candidates_size`, `-search`, base class searching size in abcmart/abcrobustlogit\n\
+* `-model_gap`, `-gap` (default 0) The gap between two base class searchings. For example, `-model_gap 2` means we will do the base class searching in iteration 1, 4, 6, ...\n\
+* `-model_warmup_iter`, `-warmup_iter` (default 0) the number of iterations that use normal boosting before ABC method kicks in. It might be helpful for datasets with a large number of classes when we only have a limited base class searching parameter (`-model_base_candidate_size`) \n\
+* `-model_warmup_use_logit`, `-warmup_use_logit` 0/1 (default 1) whether use logitboost in warmup iterations.\n\
+* `-model_abc_sample_rate`, `-abc_sample_rate` (default 1.0) the sample rate used for the base class searching\n\
+* `-model_abc_sample_min_data` `-abc_sample_min_data` (default 2000) the minimum sampled data for base class selection. This parameter only takes into effect when `-abc_sample_rate` is less than `1.0`\n\
 #### Regression related:\n\
-* `--regression_lp_loss`, `-lp` (default 2.0) whether use Lp norm instead of L2 norm. p (p >= 1.0) has to be specified\n\
-* `--regression_use_hessian` 0/1 (default 1) whether use second-order derivatives in the regression. This parameter only takes into effect when `--regression_lp_loss p` is set and `p` is greater than `2`.\n\
-* `--regression_huber_loss`, `-huber` 0/1 (default 0) whether use huber loss\n\
-* `--regression_huber_delta`, `-huber_delta` the delta parameter for huber loss. This parameter only takes into effect when `--regression_huber_loss 1` is set\n\
+* `-regression_lp_loss`, `-lp` (default 2.0) whether use Lp norm instead of L2 norm. p (p >= 1.0) has to be specified\n\
+* `-regression_use_hessian` 0/1 (default 1) whether use second-order derivatives in the regression. This parameter only takes into effect when `-regression_lp_loss p` is set and `p` is greater than `2`.\n\
+* `-regression_huber_loss`, `-huber` 0/1 (default 0) whether use huber loss\n\
+* `-regression_huber_delta`, `-huber_delta` the delta parameter for huber loss. This parameter only takes into effect when `-regression_huber_loss 1` is set\n\
 #### Parallelism:\n\
-* `--n_threads`, `-threads` (default 1)\n\
-* `--use_gpu` 0/1 (default 1 if compiled with CUDA) whether use GPU to train models. This parameter only takes into effect when the flag `-DCUDA=on` is set in `cmake`.\n\
+* `-n_threads`, `-threads` (default 1)\n\
+* `-use_gpu` 0/1 (default 1 if compiled with CUDA) whether use GPU to train models. This parameter only takes into effect when the flag `-DCUDA=on` is set in `cmake`.\n\
 #### Other:\n\
-* `--save_log`, 0/1 (default 0) whether save the runtime log to file\n\
-* `--save_model`, 0/1 (default 1)\n\
-* `--no_label`, 0/1 (default 0) It should only be enabled to output prediction file when the testing data has no label and `--model_mode` is `test`\n\
-* `--stop_tolerance` (default 1e-13) It works for all non-regression tasks, e.g., classification. The training will stop when the total training loss is less than the stop tolerance.\n\
-* `--regression_stop_factor` (default 1e-5) The auto stopping criterion is different from the classification task because the scale of the regression target is unknown. We adaptively set the regression stop tolerate to `regression_stop_factor * total_loss / sum(y^p)`, where `y` is the regression targets and `p` is the value specified in `--regression_lp_loss`.\n\
-* `--regression_auto_clip_value` 0/1 (default 1) whether use our adaptive clipping value computation for the predict value on terminal nodes. When enabled, the adaptive clipping value is computed as `tree_clip_value * max_y - min_y` where `tree_clip_value` is set via `--tree_clip_value`, `max_y` and `min_y` are the maximum and minimum regression target value, respectively.\n\
+* `-save_log`, 0/1 (default 0) whether save the runtime log to file\n\
+* `-save_model`, 0/1 (default 1)\n\
+* `-no_label`, 0/1 (default 0) It should only be enabled to output prediction file when the testing data has no label and `-model_mode` is `test`\n\
+* `-stop_tolerance` (default 2e-14) It works for all non-regression tasks, e.g., classification. The training will stop when the total training loss is less than the stop tolerance.\n\
+* `-regression_stop_factor` (default 1e-5) The auto stopping criterion is different from the classification task because the scale of the regression target is unknown. We adaptively set the regression stop tolerate to `regression_stop_factor * total_loss / sum(y^p)`, where `y` is the regression targets and `p` is the value specified in `-regression_lp_loss`.\n\
+* `-regression_auto_clip_value` 0/1 (default 1) whether use our adaptive clipping value computation for the predict value on terminal nodes. When enabled, the adaptive clipping value is computed as `tree_clip_value * max_y - min_y` where `tree_clip_value` is set via `-tree_clip_value`, `max_y` and `min_y` are the maximum and minimum regression target value, respectively.\n\
 ");
   }
 
@@ -454,11 +455,20 @@ class Config {
         std::string str(value);
         experiment_folder = str;
       } else if (key == "n_threads" || key == "threads") {
-        n_threads = stoi(value);
+        int t = stoi(value);
+        #ifndef OMP
+        if (t != 1) {
+          printf("[ERROR] Not compiled with multi-thread support. Use -n_threads 1 or consult README.md.\n");
+          throw std::runtime_error("Unsupported argument exception");
+        }
+        use_omp = 0; 
+        #else
+        n_threads = t;
         if(n_threads > 1)
           use_omp = 1;
         else
           use_omp = 0;
+        #endif
       } else if (key == "save_log") {
         save_log = stob(value) ;
       } else if (key == "save_model") {
@@ -497,7 +507,7 @@ class Config {
           regression_l1_loss = true;
         if(regression_lp_loss < 1){
           printf("[ERROR] Unsupported Lp value [%f] (p must be at least 1).\n",regression_lp_loss);
-          throw "Unsupported argument exception\n";
+          throw std::runtime_error("Unsupported argument exception");
         }
       } else if (key == "rank_query_file" || key == "query") {
         rank_query_file = std::string(value);
