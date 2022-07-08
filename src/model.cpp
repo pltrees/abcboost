@@ -588,8 +588,8 @@ void Regression::init(){
     }
     if(data->Y.size() > 0){
       double prev = config->regression_stop_factor;
-      config->regression_stop_factor = pow(config->regression_stop_factor,config->regression_lp_loss / 2.0) * sump / data->n_data;
-      //printf("[INFO] regression_stop factor changed to pow(%f, %f) * %f / %d = %f\n",prev,config->regression_lp_loss / 2.0,sump,data->n_data,config->regression_stop_factor);
+      config->regression_stop_factor = pow(config->regression_stop_factor, p / 2.0) * sump / data->n_data;
+      //printf("[INFO] regression_stop factor changed to pow(%f, %f) * %f / %d = %f\n",prev, p / 2.0,sump,data->n_data,config->regression_stop_factor);
     }
     if(config->regression_auto_clip_value && maxn - minn > 0){
       config->tree_clip_value *= maxn - minn;

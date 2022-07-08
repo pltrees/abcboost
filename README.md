@@ -52,6 +52,12 @@ Two files are generated in the working directory:
 * The saved model we just trained: `mimage.train.libsvm_abcrobustlogit_J20_v0.1.model`
 * The mapping file of the mimage.train.libsvm data: `mimage.train.libsvm.map`
 
+If the executables are compiled with GPU support, we can specify the GPU device from the command line:
+```
+CUDA_VISIBLE_DEVICES=0 ./train -data data/mimage.train.libsvm -J 20 -v 0.1 -iter 100
+```
+In the above example, we specify `GPU 0` as the device. (Use `nvidia-smi` to find out available GPUs)
+
 #### Other Training Methods
 <strong>Classification:</strong>
 The default training methods of ABCBoost is `abcrobustlogit` for classification problems. Other methods as `mart`, `robustlogit` and `abcmart` are supported. Use `-method` option to specify other methods. For example:
@@ -120,7 +126,7 @@ The labels in the specified additional files are not used in the training. Only 
 * `-data_path, -data` path to train/test data
 #### Tree related:
 * `-tree_clip_value` gradient clip (default 50)
-* `-tree_damping_factor`, regularization on numerator (default 1e-30)
+* `-tree_damping_factor`, regularization on numerator (default 1e-100)
 * `-tree_max_n_leaves`, -J (default 20)
 * `-tree_min_node_size` (default 10)
 #### Model related:
@@ -129,13 +135,13 @@ The labels in the specified additional files are not used in the training. Only 
 * `-model_feature_sample_rate` (default 1.0)
 * `-model_shrinkage`, `-shrinkage`, `-v`, the learning rate (default 0.1)
 * `-model_n_iterations`, `-iter` (default 1000)
-* `-model_save_every`, `-save` (default 500)
+* `-model_save_every`, `-save` (default 100)
 * `-model_eval_every`, `-eval` (default 1)
 * `-model_name`, `-method` regression/lambdarank/mart/abcmart/robustlogit/abcrobustlogit (default abcrobustlogit)
 * `-model_pretrained_path`, `-model`
 #### Adaptive Base Class (ABC) related:
-* `-model_base_candidate_size`, `base_candidates_size`, `-search`, base class searching size in abcmart/abcrobustlogit
-* `-model_gap`, `-gap` (default 0) The gap between two base class searchings. For example, `-model_gap 2` means we will do the base class searching in iteration 1, 4, 6, ...
+* `-model_base_candidate_size`, `base_candidates_size`, `-search` (default 2) base class searching size in abcmart/abcrobustlogit
+* `-model_gap`, `-gap` (default 5) the gap between two base class searchings. For example, `-model_gap 2` means we will do the base class searching in iteration 1, 4, 6, ...
 * `-model_warmup_iter`, `-warmup_iter` (default 0) the number of iterations that use normal boosting before ABC method kicks in. It might be helpful for datasets with a large number of classes when we only have a limited base class searching parameter (`-model_base_candidate_size`) 
 * `-model_warmup_use_logit`, `-warmup_use_logit` 0/1 (default 1) whether use logitboost in warmup iterations.
 * `-model_abc_sample_rate`, `-abc_sample_rate` (default 1.0) the sample rate used for the base class searching

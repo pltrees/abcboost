@@ -86,8 +86,13 @@ int main(int argc, char* argv[]) {
              config->model_name == "abcrobustlogit") {
 #ifdef CUDA
     if(config->use_gpu){
-      model = std::unique_ptr<ABCBoost::GradientBoosting>(
-          new ABCBoost::ABCMartGPU(data.get(), config.get()));
+	  if(data->data_header.n_classes == 2){
+        model = std::unique_ptr<ABCBoost::GradientBoosting>(
+            new ABCBoost::MartGPU(data.get(), config.get()));		  
+	  }else{
+        model = std::unique_ptr<ABCBoost::GradientBoosting>(
+            new ABCBoost::ABCMartGPU(data.get(), config.get()));
+	  }
     }else{
       if(data->data_header.n_classes == 2){
         model = std::unique_ptr<ABCBoost::GradientBoosting>(

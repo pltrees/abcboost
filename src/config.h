@@ -55,7 +55,7 @@ class Config {
   // Tree config
   bool tree_fast_bin_sort = false;
   double tree_clip_value = 50;
-  double tree_damping_factor = 1e-30;
+  double tree_damping_factor = 1e-100;
   int tree_max_n_leaves = 20;
   int tree_min_node_size = 10;
 
@@ -69,12 +69,12 @@ class Config {
   bool model_n_iter_cmd = false;
   int model_n_iterations = 1000;
   int model_more_iter = 0;
-  int model_save_every = 500;
+  int model_save_every = 100;
   int model_eval_every = 1;
   std::string model_mode = "train";
   std::string model_name = "abcrobustlogit";
   std::string model_pretrained_path = "";
-  std::string model_gap = "0";
+  std::string model_gap = "5";
   std::string model_mapping_name = "";
   bool null_config = false;
 
@@ -110,7 +110,7 @@ class Config {
   std::string rank_query_file = "";
   std::string prediction_file = "";
 
-  int base_candidates_size = 1;
+  int base_candidates_size = 2;
 
   Config(const char* path = "config.txt") {
     std::ifstream file(path);
@@ -311,7 +311,7 @@ class Config {
 * `-data_path, -data` path to train/test data\n\
 #### Tree related:\n\
 * `-tree_clip_value` gradient clip (default 50)\n\
-* `-tree_damping_factor`, regularization on numerator (default 1e-30)\n\
+* `-tree_damping_factor`, regularization on numerator (default 1e-100)\n\
 * `-tree_max_n_leaves`, -J (default 20)\n\
 * `-tree_min_node_size` (default 10)\n\
 #### Model related:\n\
@@ -320,13 +320,13 @@ class Config {
 * `-model_feature_sample_rate` (default 1.0)\n\
 * `-model_shrinkage`, `-shrinkage`, `-v`, the learning rate (default 0.1)\n\
 * `-model_n_iterations`, `-iter` (default 1000)\n\
-* `-model_save_every`, `-save` (default 500)\n\
+* `-model_save_every`, `-save` (default 100)\n\
 * `-model_eval_every`, `-eval` (default 1)\n\
 * `-model_name`, `-method` regression/lambdarank/mart/abcmart/robustlogit/abcrobustlogit (default abcrobustlogit)\n\
 * `-model_pretrained_path`, `-model`\n\
 #### Adaptive Base Class (ABC) related:\n\
-* `-model_base_candidate_size`, `base_candidates_size`, `-search`, base class searching size in abcmart/abcrobustlogit\n\
-* `-model_gap`, `-gap` (default 0) The gap between two base class searchings. For example, `-model_gap 2` means we will do the base class searching in iteration 1, 4, 6, ...\n\
+* `-model_base_candidate_size`, `base_candidates_size`, `-search`, base class searching size in abcmart/abcrobustlogit (default 2)\n\
+* `-model_gap`, `-gap` (default 5) The gap between two base class searchings. For example, `-model_gap 2` means we will do the base class searching in iteration 1, 4, 6, ...\n\
 * `-model_warmup_iter`, `-warmup_iter` (default 0) the number of iterations that use normal boosting before ABC method kicks in. It might be helpful for datasets with a large number of classes when we only have a limited base class searching parameter (`-model_base_candidate_size`) \n\
 * `-model_warmup_use_logit`, `-warmup_use_logit` 0/1 (default 1) whether use logitboost in warmup iterations.\n\
 * `-model_abc_sample_rate`, `-abc_sample_rate` (default 1.0) the sample rate used for the base class searching\n\
