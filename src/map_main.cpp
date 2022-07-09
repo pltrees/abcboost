@@ -38,5 +38,16 @@ int main(int argc, char* argv[]) {
   fclose(data_out);
   printf("Mapping is created at: %s\n",
          (config.experiment_folder + data_name + ".map").c_str());
+  if(config.map_dump_format != ""){
+    if(config.map_dump_format != "libsvm" && config.map_dump_format != "csv"){
+      printf("[ERROR] Unsuported dump format (%s), which must be libsvm or csv\n",config.map_dump_format.c_str());
+    }else{
+      auto dump_out = fopen((config.experiment_folder + data_name + "." + config.map_dump_format).c_str(), "w");
+      data.dumpData(dump_out,config.map_dump_format);
+      fclose(dump_out);
+      printf("Discretized data are dumped at: %s\n",
+            (config.experiment_folder + data_name + "." + config.map_dump_format).c_str());
+    }
+  }
   return 0;
 }

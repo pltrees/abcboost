@@ -78,6 +78,7 @@ class Config {
   std::string model_mapping_name = "";
   bool null_config = false;
 
+  int base_candidates_size = 2;
   double abc_sample_rate = 1;
   int abc_sample_min_data = 2000;
   int warmup_iter = 0;
@@ -104,13 +105,12 @@ class Config {
   bool no_label = false;
   double stop_tolerance = 2e-14;
   double regression_stop_factor = 1e-5;
-
+  std::string map_dump_format = "";
 
   // Rank Query File
   std::string rank_query_file = "";
   std::string prediction_file = "";
 
-  int base_candidates_size = 2;
 
   Config(const char* path = "config.txt") {
     std::ifstream file(path);
@@ -487,6 +487,8 @@ class Config {
         stop_tolerance = stod(value);
       } else if (key == "regression_stop_factor") {
         regression_stop_factor = stod(value);
+      } else if (key == "map_dump_format" || key == "dump") {
+        map_dump_format = value;
       } else if (key == "model_warmup_iter" || key == "warmup_iter") {
         warmup_iter = stoi(value);
       } else if (key == "model_warmup_use_logit" || key == "warmup_use_logit") {

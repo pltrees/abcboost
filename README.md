@@ -14,10 +14,10 @@ cmake ..
 make
 cd ..
 ```
-This will create three executables (`train`, `predict` and `map`) in the `abcboost` directory.
-`train` is the executable to train models.
-`predict` is the executable to validate and inference using trained models.
-`map` is an auxiliary executable to generate the histogram mapping without actually training the model. The mapping is used to quantize the real-value features to negative integers within 0..`-data_max_n_bins`.
+This will create three executables (`abcboost_train`, `abcboost_predict` and `abcboost_map`) in the `abcboost` directory.
+`abcboost_train` is the executable to train models.
+`abcboost_predict` is the executable to validate and inference using trained models.
+`abcboost_map` is an auxiliary executable to generate the histogram mapping without actually training the model. The mapping is used to quantize the real-value features to negative integers within 0..`-data_max_n_bins`. We can dump the discretized data by adding `-dump libsvm` or `-dump csv` as an argument of `abcboost_map`.
 
 The default setting builds ABCBoost with multi-thread support [OpenMP](https://en.wikipedia.org/wiki/OpenMP) (OpenMP comes with the system GCC toolchains on Linux).
 To turn off the multi-thread option, set `OMP=OFF`:
@@ -43,9 +43,9 @@ Unzip it by:
 ```
 bunzip2 data/mimage*.bz
 ```
-Note that only the train file is required for training. To train the model with 100 iterations, launch `train` from the command line:
+Note that only the train file is required for training. To train the model with 100 iterations, launch `abcboost_train` from the command line:
 ```
-./train -data data/mimage.train.libsvm -J 20 -v 0.1 -iter 100
+./abcboost_train -data data/mimage.train.libsvm -J 20 -v 0.1 -iter 100
 ```
 where `-J 20` specifies 20 terminal node for each tree, `-v 0.1` represents the shrinkage rate, a.k.a., learning rate, is 0.1.
 Two files are generated in the working directory:
@@ -54,7 +54,7 @@ Two files are generated in the working directory:
 
 If the executables are compiled with GPU support, we can specify the GPU device from the command line:
 ```
-CUDA_VISIBLE_DEVICES=0 ./train -data data/mimage.train.libsvm -J 20 -v 0.1 -iter 100
+CUDA_VISIBLE_DEVICES=0 ./abcboost_train -data data/mimage.train.libsvm -J 20 -v 0.1 -iter 100
 ```
 In the above example, we specify `GPU 0` as the device. (Use `nvidia-smi` to find out available GPUs)
 
@@ -62,31 +62,31 @@ In the above example, we specify `GPU 0` as the device. (Use `nvidia-smi` to fin
 <strong>Classification:</strong>
 The default training methods of ABCBoost is `abcrobustlogit` for classification problems. Other methods as `mart`, `robustlogit` and `abcmart` are supported. Use `-method` option to specify other methods. For example:
 ```
-./train -data data/mimage.train.libsvm -J 20 -v 0.1 -iter 100 -method mart
+./abcboost_train -data data/mimage.train.libsvm -J 20 -v 0.1 -iter 100 -method mart
 ```
 <strong>Regression:</strong>
 Regression problems are supported by adding `-method regression`:
 ```
-./train -data data/comp_cpu.train.libsvm -J 20 -v 0.1 -iter 100 -method regression
+./abcboost_train -data data/comp_cpu.train.libsvm -J 20 -v 0.1 -iter 100 -method regression
 ```
 
 <strong>Ranking:</strong>
 Ranking tasks are supported by using `-method lambdarank`. Note that the query/group file need to be specified (the query file tells us how many instances in the data for each query):
 ```
-./train -data data/mslr10k.train -query data/mslr10k.train.query -J 20 -v 0.1 -iter 100 -method lambdarank
-./predict -data data/mslr10k.test -query data/mslr10k.test.query -model mslr10k.train_lambdarank_J20_v0.1.model
+./abcboost_train -data data/mslr10k.train -query data/mslr10k.train.query -J 20 -v 0.1 -iter 100 -method lambdarank
+./abcboost_predict -data data/mslr10k.test -query data/mslr10k.test.query -model mslr10k.train_lambdarank_J20_v0.1.model
 ```
 
 ### Testing
 
 To test the model with the test data `mimage.test.libsvm`, type the below in command line:
 ```
-./predict -data data/mimage.test.libsvm -model mimage.train.libsvm_abcrobustlogit_J20_v0.1.model
+./abcboost_predict -data data/mimage.test.libsvm -model mimage.train.libsvm_abcrobustlogit_J20_v0.1.model
 ```
 
 To test the first 50 iterations of the trained model (the trained model has 100 iterations):
 ```
-./predict -data mimage.test.libsvm -model mimage.train.libsvm_abcrobustlogit_J20_v0.1.model -iter 50
+./abcboost_predict -data mimage.test.libsvm -model mimage.train.libsvm_abcrobustlogit_J20_v0.1.model -iter 50
 ```
 ### Parameter Tuning
 
@@ -100,18 +100,18 @@ Here we illustrate some common parameters and provide some examples:
 
 To train the model with 2000 iterations, 16 leaves per tree and 0.08 learning rate:
 ```
-./train -data data/mimage.train.libsvm -iter 2000 -J 16 -v 0.08
+./abcboost_train -data data/mimage.train.libsvm -iter 2000 -J 16 -v 0.08
 ```
 
 To train the model with 2000 iterations, 16 leaves per tree, 0.08 learning rate and enable the exhaustive base class searching (10 is the number of classes of the mimage.train.libsvm dataset):
 ```
-./train -data data/mimage.train.libsvm -iter 2000 -J 16 -v 0.08 -search 10
+./abcboost_train -data data/mimage.train.libsvm -iter 2000 -J 16 -v 0.08 -search 10
 ```
 Note that the exhaustive searching produces better-generalized model while requiring substantially more time.
 
 To train the model with 2000 iterations, 16 leaves per tree, 0.08 learning rate and also use the value of the test data to quantize the data:
 ```
-./train -data data/mimage.train.libsvm -iter 2000 -J 16 -v 0.08 -additional_files data/mimage.test.libsvm
+./abcboost_train -data data/mimage.train.libsvm -iter 2000 -J 16 -v 0.08 -additional_files data/mimage.test.libsvm
 ```
 The labels in the specified additional files are not used in the training. Only the feature values are used to generate (potentially) better quantization. Better testing results may be obtained when using additional files
 
@@ -328,7 +328,7 @@ We provide the option which selects a random sample of the training set at each 
 ### Restoring saved models
 One can restore a pre-trained model and use it for prediction, fine-tuning or further training with the `-model_pretrained_path` parameter or `-model` for short. For instance,
 ```
-./predict -data data/mimage.train.libsvm -model mimage.train.libsvm_abcrobustlogit_J16_v0.08.model
+./abcboost_predict -data data/mimage.train.libsvm -model mimage.train.libsvm_abcrobustlogit_J16_v0.08.model
 ```
 
 ## Parallelism for Large Datasets

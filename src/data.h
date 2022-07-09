@@ -120,6 +120,9 @@ class Data {
   void printData(unsigned int n = 10);
   void printSummary();
   void saveData(FILE* fileptr);
+  void dumpData(FILE* fileptr, std::string format);
+  void dumpLibsvm(FILE* fileptr);
+  void dumpCSV(FILE* fileptr);
   void loadRankQuery();
   bool doesFileExist(std::string path);
 

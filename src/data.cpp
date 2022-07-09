@@ -20,6 +20,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <list>
 
 #include "config.h"
 #include "data.h"
@@ -201,6 +202,63 @@ void Data::printSummary() {
  * @param[in] fileptr: Pointer to the FILE object
  */
 void Data::saveData(FILE* fileptr) { data_header.serialize(fileptr); }
+
+void Data::dumpData(FILE* fileptr, std::string format){
+  if(format == "libsvm"){
+    dumpLibsvm(fileptr);
+  }else if(format == "csv"){
+    dumpCSV(fileptr);
+  }else{
+    printf("[ERROR] Unsuported dump format (%s), which must be libsvm or csv\n",format.c_str());
+  }
+} 
+
+void Data::dumpLibsvm(FILE* fileptr) {
+  const auto n = Y.size();
+  const bool data_remap = data_header.idx2label.size() > 0;
+  std::vector<unsigned int> indices =
+      std::vector<unsigned int>(data_header.n_feats, 0);
+  int val = 0;
+  for (int i = 0; i < n; ++i) {
+    fprintf(fileptr,"%g",data_remap ? data_header.idx2label[Y[i]] : Y[i]);
+    for (int j : valid_fi) {
+      if (dense_f[j]) {
+        val = Xv[j][i];
+      } else {
+        val = (Xi[j][indices[j]] == i) ? Xv[j][indices[j]] : 0;
+        if (Xi[j][indices[j]] == i) ++indices[j];
+      }
+      if(val != 0){
+        fprintf(fileptr," %d:%d", j + 1, val);
+      }
+    }
+    fprintf(fileptr,"\n");
+  }
+}
+
+void Data::dumpCSV(FILE* fileptr) {
+  const auto n = Y.size();
+  const bool data_remap = data_header.idx2label.size() > 0;
+  const int n_feats = data_header.n_feats;
+  std::vector<unsigned int> indices =
+      std::vector<unsigned int>(n_feats, 0);
+  int val = 0;
+  for (int i = 0; i < n; ++i) {
+    fprintf(fileptr,"%g",data_remap ? data_header.idx2label[Y[i]] : Y[i]);
+    for (int j = 0;j < n_feats;++j){
+      if (Xv[j].size() == 0){
+        val = 0;
+      } else if (dense_f[j]) {
+        val = Xv[j][i];
+      } else {
+        val = (Xi[j][indices[j]] == i) ? Xv[j][indices[j]] : 0;
+        if (Xi[j][indices[j]] == i) ++indices[j];
+      }
+      fprintf(fileptr,",%d", val);
+    }
+    fprintf(fileptr,"\n");
+  }
+}
 
 void Data::loadDataHeader(FILE* fileptr) {
   fread(&data_header.n_feats, sizeof(unsigned int), 1, fileptr);
