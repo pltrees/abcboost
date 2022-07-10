@@ -85,7 +85,7 @@ void GradientBoosting::print_test_message(int iter,double iter_time,int& low_err
   int err = getError();
   if(low_err > err)
     low_err = err;
-  printf("| epoch: %4d | loss: %20.14e | errors/lowest: %7d/%-7d | time: %.5f |\n", iter,
+  printf("%4d | loss: %20.14e | errors/lowest: %7d/%-7d | time: %.5f\n", iter,
        loss, err, low_err, iter_time);
 #ifdef USE_R_CMD
  R_FlushConsole();
@@ -96,7 +96,7 @@ void GradientBoosting::print_test_message(int iter,double iter_time,int& low_err
 
 void GradientBoosting::print_train_message(int iter,double loss,double iter_time){
   int err = getError();
-  printf("| epoch: %4d | loss: %20.14e | errors: %7d | time: %.5f |\n", iter,
+  printf("%4d | loss: %20.14e | errors: %7d | time: %.5f\n", iter,
        loss, err, iter_time);
 #ifdef USE_R_CMD
   R_FlushConsole();
@@ -461,7 +461,7 @@ void GradientBoosting::setupExperiment() {
   experiment_path = sstream.str();
   config->formatted_output_name = experiment_path;
 
-  log_out = (config->save_log) ? fopen((experiment_path + "." + config->model_mode + "log").c_str(), "w") : stdout;
+  log_out = (config->save_log && config->no_label == false) ? fopen((experiment_path + "." + config->model_mode + "log").c_str(), "w") : stdout;
 
   sample_data = (config->model_data_sample_rate < 1);
   sample_feature = (config->model_feature_sample_rate < 1);
@@ -615,7 +615,7 @@ void Regression::init(){
 }
 
 void Regression::print_train_message(int iter,double loss,double iter_time){
-  printf("| epoch: %4d | loss: %20.14e | time: %.5f |\n", iter,
+  printf("%4d | loss: %20.14e | time: %.5f\n", iter,
        loss, iter_time);
 #ifdef USE_R_CMD
   R_FlushConsole();
@@ -643,7 +643,7 @@ void Regression::print_test_message(int iter,double iter_time,double& low_loss){
   double l2_loss = loss;
   if(loss_name != "l2_loss"){
     l2_loss = getLSLoss();
-    printf("| epoch: %4d | l2_loss: %20.14e | %s: %-20.14e | time: %.5f |\n", iter,
+    printf("%4d | l2_loss: %20.14e | %s: %-20.14e | time: %.5f\n", iter,
        l2_loss, loss_name.c_str(), loss, iter_time);
   }else{
     printf("| epoch: %4d | l2_loss: %20.14e | time: %.5f |\n", iter,
@@ -858,23 +858,32 @@ void Regression::saveModel(int iter) { GradientBoosting::saveModel(iter); }
 BinaryMart::BinaryMart(Data *data, Config *config) : GradientBoosting(data, config) {}
 
 void BinaryMart::savePrediction() {
-  FILE *fp = fopen(config->prediction_file.c_str(), "w");
-  if (fp == NULL) {
-    fprintf(stderr, "[Warning] prediction_file is not specified.\n");
-    return;
+  std::string prediction_file = config->formatted_output_name + ".prediction";
+  std::string probability_file = config->formatted_output_name + ".probability";
+  FILE *fp = fopen(prediction_file.c_str(), "w");
+  FILE *fprob = NULL;
+  if (config->save_prob){
+    fprob = fopen(probability_file.c_str(), "w");
   }
   for (size_t i = 0; i < data->n_data; ++i) {
     std::vector<double> prob(2);
     prob[0] = F[i];
     prob[1] = -F[i];
-    softmax(prob);
-    for (int j = 0; j < data->data_header.n_classes; ++j) {
-      int internal_idx = data->data_header.label2idx[j];
-      fprintf(fp, "%.5f ", prob[internal_idx]);
+    int maxj = prob[0] >= prob[1] ? 0 : 1;
+    int pred = round(data->data_header.idx2label[maxj]);
+    fprintf(fp,"%d\n",pred);
+    if(fprob != NULL){
+      softmax(prob);
+      for (int j = 0; j < data->data_header.n_classes; ++j) {
+        int internal_idx = data->data_header.label2idx[j];
+        fprintf(fp, "%.5f ", prob[internal_idx]);
+      }
+      fprintf(fp, "\n");
     }
-    fprintf(fp, "\n");
   }
   fclose(fp);
+  if(fprob != NULL)
+    fclose(fprob);
 }
 
 void BinaryMart::test() {
@@ -1754,7 +1763,7 @@ LambdaMart::LambdaMart(Data *data, Config *config) : GradientBoosting(data, conf
 }
 
 void LambdaMart::savePrediction(){
-  GradientBoosting::saveF();
+  GradientBoosting::savePrediction();
 }
 
 void LambdaMart::print_test_message(int iter,double iter_time){
@@ -1762,7 +1771,7 @@ void LambdaMart::print_test_message(int iter,double iter_time){
     return;
   auto p = getNDCG();
   double NDCG = p.second;
-  printf("| epoch: %4d | NDCG: %20.14e | time: %.5f |\n", iter,
+  printf("%4d | NDCG: %20.14e | time: %.5f\n", iter,
        NDCG, iter_time);
 #ifdef USE_R_CMD
  R_FlushConsole();
@@ -1841,7 +1850,7 @@ void LambdaMart::train() {
 }
 
 void LambdaMart::print_train_message(int iter,double NDCG,double iter_time){
-  printf("| epoch: %4d | NDCG: %20.14e | time: %.5f |\n", iter,
+  printf("%4d | NDCG: %20.14e | time: %.5f\n", iter,
        NDCG, iter_time);
 #ifdef USE_R_CMD
   R_FlushConsole();
