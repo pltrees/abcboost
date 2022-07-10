@@ -95,6 +95,7 @@ Here we illustrate some common parameters and provide some examples:
 * `-search` searching size for the base class (default 1: we greedily choose the base classes according to the training loss). For example, 2 means we try the class with the greatest loss and the class with the second greatest loss as base class and pick the one with lower loss as the base class for the current iteration.
 * `-n_threads` number of threads (default 1) <strong>It can only be used when multi-thread is enabled. (Compile the code with `-DOMP=ON` in cmake.)</strong>
 * `-additional_files` using other files to do bin quantization besides the training data. File names are separated by `,` without additional spaces, e.g., `-additional_files file1,file2,file3`.
+* `-additional_files_no_label` using other unlabeled files to do bin quantization besides the training data. File names are separated by `,` without additional spaces, e.g., `-additional_files_no_label file1,file2,file3`.
 
 To train the model with 2000 iterations, 16 leaves per tree and 0.08 learning rate:
 ```

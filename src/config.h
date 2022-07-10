@@ -99,6 +99,8 @@ class Config {
   // Others
   bool save_log = true;
   bool save_model = true;
+  bool save_prob = false;
+
   std::string experiment_folder = "./";
   std::string additional_files = "";
   std::string additional_files_no_label = "";
@@ -111,6 +113,9 @@ class Config {
   // Rank Query File
   std::string rank_query_file = "";
   std::string prediction_file = "";
+
+  // Runtime variables
+  std::string formatted_output_name = "";
 
 
   Config(const char* path = "config.txt") {
@@ -199,6 +204,7 @@ class Config {
     // Others
     fwrite(&save_log, sizeof(bool), 1, fp);
     fwrite(&save_model, sizeof(bool), 1, fp);
+    fwrite(&save_prob, sizeof(bool), 1, fp);
     saveString(experiment_folder, fp);
     saveString(additional_files, fp);
     saveString(additional_files_no_label, fp);
@@ -288,6 +294,7 @@ class Config {
     // Others
     ret += fread(&save_log, sizeof(bool), 1, fp);
     ret += fread(&save_model, sizeof(bool), 1, fp);
+    ret += fread(&save_prob, sizeof(bool), 1, fp);
     loadString(str, fp);
     loadString(additional_files, fp);
     loadString(additional_files_no_label, fp);
@@ -345,6 +352,7 @@ class Config {
 #### Other:\n\
 * `-save_log`, 0/1 (default 0) whether save the runtime log to file\n\
 * `-save_model`, 0/1 (default 1)\n\
+* `-save_prob`, 0/1 (default 0) whether save the prediction probability for classification tasks\n\
 * `-no_label`, 0/1 (default 0) It should only be enabled to output prediction file when the testing data has no label and `-model_mode` is `test`\n\
 * `-stop_tolerance` (default 2e-14) It works for all non-regression tasks, e.g., classification. The training will stop when the total training loss is less than the stop tolerance.\n\
 * `-regression_stop_factor` (default 1e-5) The auto stopping criterion is different from the classification task because the scale of the regression target is unknown. We adaptively set the regression stop tolerate to `regression_stop_factor * total_loss / sum(y^p)`, where `y` is the regression targets and `p` is the value specified in `-regression_lp_loss`.\n\
@@ -476,6 +484,8 @@ class Config {
         save_log = stob(value) ;
       } else if (key == "save_model") {
         save_model = stob(value);
+      } else if (key == "save_prob") {
+        save_prob = stob(value);
       } else if (key == "use_gpu") {
         use_gpu = stob(value);
       } else if (key == "use_omp") {

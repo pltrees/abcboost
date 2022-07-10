@@ -158,11 +158,10 @@ void GradientBoosting::returnPrediction(double *ret) {
 }
 
 void GradientBoosting::savePrediction() {
-  FILE *fp = fopen(config->prediction_file.c_str(), "w");
-  if (fp == NULL) {
-    fprintf(stderr, "[Warning] prediction_file is not specified.\n");
-    return;
-  }
+  std::string prediction_file = config->formatted_output_name + ".prediction";
+  std::string probability_file = config->formatted_output_name + ".probability";
+  FILE *fp = fopen(prediction_file.c_str(), "w");
+  FILE *fprob = NULL;
   if (config->model_mode == "test_rank") {
     for (size_t i = 0; i < data->n_data; ++i) {
       std::vector<double> prob;
@@ -184,18 +183,35 @@ void GradientBoosting::savePrediction() {
     }
     
   }else {
+    if (config->save_prob){
+      fprob = fopen(probability_file.c_str(), "w");
+    }
     for (size_t i = 0; i < data->n_data; ++i) {
       std::vector<double> prob(data->data_header.n_classes);
-      for (int j = 0; j < data->data_header.n_classes; ++j) prob[j] = F[j][i];
-      softmax(prob);
-      for (int j = 0; j < data->data_header.n_classes; ++j) {
-        int internal_idx = data->data_header.label2idx[j];
-        fprintf(fp, "%.5f ", prob[internal_idx]);
+      double maxn = F[0][i];
+      int maxj = 0;
+      for (int j = 0; j < data->data_header.n_classes; ++j){
+        prob[j] = F[j][i];
+        if(maxn < prob[j]){
+          maxn = prob[j];
+          maxj = j;
+        }
       }
-      fprintf(fp, "\n");
+      int pred = round(data->data_header.idx2label[maxj]);
+      fprintf(fp,"%d\n",pred);
+      if(fprob != NULL){
+        softmax(prob);
+        for (int j = 0; j < data->data_header.n_classes; ++j) {
+          int internal_idx = data->data_header.label2idx[j];
+          fprintf(fprob, "%.5f ", prob[internal_idx]);
+        }
+        fprintf(fprob, "\n");
+      }
     }
   }
   fclose(fp);
+  if(fprob != NULL)
+    fclose(fprob);
 }
 
 /**
@@ -443,6 +459,7 @@ void GradientBoosting::setupExperiment() {
   }
 
   experiment_path = sstream.str();
+  config->formatted_output_name = experiment_path;
 
   log_out = (config->save_log) ? fopen((experiment_path + "." + config->model_mode + "log").c_str(), "w") : stdout;
 
@@ -1741,6 +1758,8 @@ void LambdaMart::savePrediction(){
 }
 
 void LambdaMart::print_test_message(int iter,double iter_time){
+  if(config->no_label)
+    return;
   auto p = getNDCG();
   double NDCG = p.second;
   printf("| epoch: %4d | NDCG: %20.14e | time: %.5f |\n", iter,
