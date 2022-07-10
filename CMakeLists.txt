@@ -31,7 +31,6 @@ endif()
 
 add_executable(abcboost_train src/train_main.cpp src/data.cpp src/tree.cpp src/model.cpp)
 add_executable(abcboost_predict src/predict_main.cpp src/data.cpp src/tree.cpp src/model.cpp)
-add_executable(abcboost_map src/map_main.cpp src/data.cpp src/tree.cpp src/model.cpp)
 
 if (CUDA)
   target_link_libraries(abcboost_train ${CUDA_LIBRARIES})
@@ -39,7 +38,5 @@ if (CUDA)
   target_link_libraries(abcboost_train ${CUDA_curand_LIBRARY})
   target_link_libraries(abcboost_predict ${CUDA_LIBRARIES})
   target_link_libraries(abcboost_predict cuda_obj)
-  target_link_libraries(abcboost_map ${CUDA_LIBRARIES})
-  target_link_libraries(abcboost_map cuda_obj)
 endif(CUDA)
 

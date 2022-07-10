@@ -14,10 +14,9 @@ cmake ..
 make
 cd ..
 ```
-This will create three executables (`abcboost_train`, `abcboost_predict` and `abcboost_map`) in the `abcboost` directory.
+This will create two executables (`abcboost_train` and `abcboost_predict`) in the `abcboost` directory.
 `abcboost_train` is the executable to train models.
 `abcboost_predict` is the executable to validate and inference using trained models.
-`abcboost_map` is an auxiliary executable to generate the histogram mapping without actually training the model. The mapping is used to quantize the real-value features to negative integers within 0..`-data_max_n_bins`. We can dump the discretized data by adding `-dump libsvm` or `-dump csv` as an argument of `abcboost_map`.
 
 The default setting builds ABCBoost with multi-thread support [OpenMP](https://en.wikipedia.org/wiki/OpenMP) (OpenMP comes with the system GCC toolchains on Linux).
 To turn off the multi-thread option, set `OMP=OFF`:
@@ -48,9 +47,8 @@ Note that only the train file is required for training. To train the model with 
 ./abcboost_train -data data/mimage.train.libsvm -J 20 -v 0.1 -iter 100
 ```
 where `-J 20` specifies 20 terminal node for each tree, `-v 0.1` represents the shrinkage rate, a.k.a., learning rate, is 0.1.
-Two files are generated in the working directory:
+One file is generated in the working directory:
 * The saved model we just trained: `mimage.train.libsvm_abcrobustlogit_J20_v0.1.model`
-* The mapping file of the mimage.train.libsvm data: `mimage.train.libsvm.map`
 
 If the executables are compiled with GPU support, we can specify the GPU device from the command line:
 ```

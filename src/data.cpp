@@ -314,12 +314,28 @@ void Data::adaptiveQuantization() {
     data_pool.emplace_back(new Data(config));
   }
   for (int i = 0; i < data_pool.size(); ++i) {
-    if (config->data_is_matrix) {
+    if (testDataIsMatrix(additional_files[i])) {
       data_pool[i]->loadMatrixFormat(additional_files[i]);
     } else {
       data_pool[i]->loadLibsvmFormat(additional_files[i]);
     }
   }
+  std::vector<std::string> additional_files_no_label = split(config->additional_files_no_label);
+  auto before_size = data_pool.size();
+  for (const auto& file : additional_files_no_label) {
+    data_pool.emplace_back(new Data(config));
+  }
+
+  auto prev_no_label_config = config->no_label;
+  config->no_label = true;
+  for (int i = 0; i < additional_files_no_label.size(); ++i) {
+    if (testDataIsMatrix(additional_files_no_label[i])) {
+      data_pool[before_size + i]->loadMatrixFormat(additional_files_no_label[i]);
+    } else {
+      data_pool[before_size + i]->loadLibsvmFormat(additional_files_no_label[i]);
+    }
+  }
+  config->no_label = prev_no_label_config;
 
 #pragma omp parallel for
   for (int f = 0; f < valid_fi.size(); ++f) {

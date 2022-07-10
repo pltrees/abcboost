@@ -101,6 +101,7 @@ class Config {
   bool save_model = true;
   std::string experiment_folder = "./";
   std::string additional_files = "";
+  std::string additional_files_no_label = "";
   bool no_map = false;
   bool no_label = false;
   double stop_tolerance = 2e-14;
@@ -200,6 +201,7 @@ class Config {
     fwrite(&save_model, sizeof(bool), 1, fp);
     saveString(experiment_folder, fp);
     saveString(additional_files, fp);
+    saveString(additional_files_no_label, fp);
     fwrite(&no_map, sizeof(bool), 1, fp);
     fwrite(&stop_tolerance, sizeof(double), 1, fp);
     fwrite(&regression_stop_factor, sizeof(double), 1, fp);
@@ -288,6 +290,7 @@ class Config {
     ret += fread(&save_model, sizeof(bool), 1, fp);
     loadString(str, fp);
     loadString(additional_files, fp);
+    loadString(additional_files_no_label, fp);
     ret += fread(&no_map, sizeof(bool), 1, fp);
     ret += fread(&stop_tolerance, sizeof(double), 1, fp);
     ret += fread(&regression_stop_factor, sizeof(double), 1, fp);
@@ -479,6 +482,8 @@ class Config {
         use_omp = stob(value);
       } else if (key == "additional_files") {
         additional_files = std::string(value);
+      } else if (key == "additional_files_no_label") {
+        additional_files_no_label = std::string(value);
       } else if (key == "no_map") {
         no_map = stob(value);
       } else if (key == "no_label") {
