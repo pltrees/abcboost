@@ -496,7 +496,7 @@ class Config {
         additional_files_no_label = std::string(value);
       } else if (key == "no_map") {
         no_map = stob(value);
-      } else if (key == "no_label") {
+      } else if (key == "no_label" || key == "nolabel" || key == "no-label") {
         no_label = stob(value);
       } else if (key == "stop_tolerance") {
         stop_tolerance = stod(value);

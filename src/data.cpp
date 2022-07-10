@@ -517,7 +517,7 @@ void Data::loadMemoryKeyValueFormat(const double* Y_matrix, const std::vector<st
 			if(config->no_label == false){
       	Y_global[t].push_back(Y_matrix[i]);
 			}else{
-      	Y_global[t].push_back(0);
+      	Y_global[t].push_back(data_header.idx2label[0]);
 			}
       int j;
       double j_val;
@@ -692,7 +692,7 @@ void Data::loadMatrixFormat(std::string path) {
       	pos = strtok_r(token, delimiter, &ptr);
       	Y_global[t].push_back(atof(pos));
 			}else{
-      	Y_global[t].push_back(0);
+      	Y_global[t].push_back(data_header.idx2label[0]);
 			}
       int j = 1;
       while (true) {
@@ -788,7 +788,7 @@ void Data::loadLibsvmFormat(std::string path) {
 				pos = strtok_r(token, delimiter, &ptr);
       	Y_global[t].push_back(atof(pos));
 			}else{
-      	Y_global[t].push_back(0);
+      	Y_global[t].push_back(data_header.idx2label[0]);
 			}
       int j;
       double j_val;

@@ -876,9 +876,9 @@ void BinaryMart::savePrediction() {
       softmax(prob);
       for (int j = 0; j < data->data_header.n_classes; ++j) {
         int internal_idx = data->data_header.label2idx[j];
-        fprintf(fp, "%.5f ", prob[internal_idx]);
+        fprintf(fprob, "%.5f ", prob[internal_idx]);
       }
-      fprintf(fp, "\n");
+      fprintf(fprob, "\n");
     }
   }
   fclose(fp);
