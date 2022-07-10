@@ -26,8 +26,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs,
 	if(model_header.config.null_config == false){
 		*config = model_header.config;
 		config->model_mode = "test";
-		printf("config->model_mapping_name (%s)\n",config->model_mapping_name.c_str());
-	}
+	}else{
+    printf("[ERROR] Model file not found: -model (%s)\n",config->model_pretrained_path.c_str());
+    return;
+  }
 
 	ABCBoost::Data* data = new ABCBoost::Data(config);
 
@@ -43,7 +45,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs,
     config->model_is_regression = true;
     model = new ABCBoost::Regression(data, config);
   } else {
-    printf("Unsupported model name %s\n", config->model_name.c_str());
+    printf("[ERROR] Unsupported model name %s\n", config->model_name.c_str());
+    return;
   }
 
 	config->model_pretrained_path = path;
@@ -52,16 +55,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs,
 	config->load_data_head_only = true;
 	config->model_suffix = "";
 
-	std::string mapping_name = config->model_mapping_name;
-	FILE* fp = fopen(mapping_name.c_str(),"rb");
-	if(fp == NULL){
-		printf("[ERROR] mapping file not found! (%s)\n",mapping_name.c_str());
-		uint64_t* ip = (uint64_t*) mxGetData(plhs[0]);
-		*ip = reinterpret_cast<uint64_t>(nullptr);
-		return;
-	}
-	data->data_header = ABCBoost::DataHeader::deserialize(fp);
-	fclose(fp);
+	data->data_header = model_header.auxDataHeader;
 
 	model->init();
 	model->loadModel();

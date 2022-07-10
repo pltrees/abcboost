@@ -107,7 +107,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs,
   config->mem_n_row = X_n_row;
   config->mem_n_col = X_n_col;
   
-  data->loadData();
+  data->loadData(true);
   model->init();
   model->loadModel();
   model->setupExperiment();

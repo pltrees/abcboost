@@ -114,8 +114,8 @@ class Data {
   Data(Config* config);
   ~Data();
 
-  void load(FILE* fileptr);
-  void loadData(FILE* fileptr = NULL);
+  void load();
+  void loadData(bool from_scratch);
   void loadDataHeader(FILE* fileptr = NULL);
   void printData(unsigned int n = 10);
   void printSummary();

@@ -93,7 +93,8 @@ SEXP train(SEXP Y, SEXP X, SEXP row, SEXP col, SEXP r_model_name, SEXP r_iter, S
     config->model_is_regression = true;
     model = new ABCBoost::Regression(data, config);
   } else {
-    fprintf(stderr, "Unsupported model name %s\n", config->model_name.c_str());
+    printf("[ERROR] Unsupported model name %s\n", config->model_name.c_str());
+    return R_NilValue;
   }
 
   config->mem_Y_matrix = REAL(y);
@@ -101,7 +102,7 @@ SEXP train(SEXP Y, SEXP X, SEXP row, SEXP col, SEXP r_model_name, SEXP r_iter, S
   config->mem_n_row = n_row;
   config->mem_n_col = n_col;
 
-  data->loadData();
+  data->loadData(true);
   model->init();
   model->loadModel();
   model->setupExperiment();
@@ -200,7 +201,8 @@ SEXP train_sparse(SEXP Y, SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x
     config->model_is_regression = true;
     model = new ABCBoost::Regression(data, config);
   } else {
-    fprintf(stderr, "Unsupported model name %s\n", config->model_name.c_str());
+    printf("[ERROR] Unsupported model name %s\n", config->model_name.c_str());
+    return R_NilValue;
   }
 
   config->mem_is_sparse = true;
@@ -209,7 +211,7 @@ SEXP train_sparse(SEXP Y, SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x
   config->mem_n_row = n_row;
   config->mem_n_col = n_col;
 
-  data->loadData();
+  data->loadData(true);
   model->init();
   model->loadModel();
   model->setupExperiment();
@@ -239,7 +241,7 @@ SEXP test(SEXP Y, SEXP X, SEXP row, SEXP col, SEXP r_model) {
   config->from_wrapper = true;
   config->save_log = false;
 
-  model->getData()->loadData();
+  model->getData()->loadData(true);
   model->init();
   model->setupExperiment();
 
@@ -288,7 +290,7 @@ SEXP test_sparse(SEXP Y,SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x, 
   config->from_wrapper = true;
   config->save_log = false;
 
-  model->getData()->loadData();
+  model->getData()->loadData(true);
   model->init();
   model->setupExperiment();
 
@@ -310,12 +312,6 @@ SEXP saveModel(SEXP r_model, SEXP r_path) {
   model->getConfig()->from_wrapper = true;
   model->getConfig()->model_suffix = "";
 
-  std::string mapping_name = path + model->getConfig()->mapping_suffix;
-  FILE* fp = fopen(mapping_name.c_str(), "wb");
-  model->getData()->saveData(fp);
-  fclose(fp);
-  model->getConfig()->model_mapping_name = mapping_name;
-  printf("saving mapping name %s\n",mapping_name.c_str());
   model->saveModel(model->getConfig()->model_n_iterations);
 
   return R_NilValue;
@@ -331,8 +327,9 @@ SEXP loadModel(SEXP r_path) {
   if (model_header.config.null_config == false) {
     *config = model_header.config;
     config->model_mode = "test";
-    printf("config->model_mapping_name (%s)\n",
-           config->model_mapping_name.c_str());
+  } else {
+    printf("[ERROR] Model file not found: -model (%s)\n",config->model_pretrained_path.c_str());
+    return R_NilValue;
   }
 
   ABCBoost::Data* data = new ABCBoost::Data(config);
@@ -350,7 +347,8 @@ SEXP loadModel(SEXP r_path) {
     config->model_is_regression = true;
     model = new ABCBoost::Regression(data, config);
   } else {
-    fprintf(stderr, "Unsupported model name %s\n", config->model_name.c_str());
+    printf("[ERROR] Unsupported model name %s\n", config->model_name.c_str());
+    return R_NilValue;
   }
 
   config->model_pretrained_path = path;
@@ -358,14 +356,7 @@ SEXP loadModel(SEXP r_path) {
   config->load_data_head_only = true;
   config->model_suffix = "";
   
-  std::string mapping_name = config->model_mapping_name;
-  FILE* fp = fopen(mapping_name.c_str(), "rb");
-  if (fp == NULL) {
-    printf("[ERROR] mapping file not found! (%s)\n", mapping_name.c_str());
-    return R_NilValue;
-  }
-  data->data_header = ABCBoost::DataHeader::deserialize(fp);
-  fclose(fp);
+  data->data_header = model_header.auxDataHeader;
 
   model->init();
   model->loadModel();

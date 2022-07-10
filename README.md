@@ -285,7 +285,6 @@ model = abcboost.train(Y,X,'abcrobustlogit',100,20,0.1,3,0)
 # All command line supported parameters can be passed as optional keyword arguments
 # For example:
 # model = abcboost.train(Y,X,'abcrobustlogit',100,20,0.1,3,0,n_threads=1)
-res = abcboost.test(Y,X,model)
 # abcboost.save(model,'mymodel.model')
 # model = abcboost.load('mymodel.model')
 res = abcboost.test(testY,testX,model)

@@ -24,13 +24,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs,
 	model->getConfig()->from_wrapper = true;
 	model->getConfig()->model_suffix = "";
 
-  std::string mapping_name = path + model->getConfig()->mapping_suffix;
-	FILE* fp = fopen(mapping_name.c_str(),"wb");
-	model->getData()->saveData(fp);
-	fclose(fp);
-  model->getConfig()->model_mapping_name = mapping_name;
 	model->saveModel(model->getConfig()->model_n_iterations);
-
-
 }
 

@@ -43,13 +43,11 @@ int main(int argc, char* argv[]) {
 
   std::unique_ptr<ABCBoost::Data> data =
       std::unique_ptr<ABCBoost::Data>(new ABCBoost::Data(config.get()));
-  std::string mapping_name = config->getMappingName();
-  FILE* fp = fopen(mapping_name.c_str(), "rb");
-  if (fp != NULL) {
-    data->loadData(fp);
-    fclose(fp);
-  } else {
-    data->loadData();
+  if (model_header.config.null_config == false){
+    data->data_header = model_header.auxDataHeader;
+    data->loadData(false);
+  }else{
+    data->loadData(true);
   }
   data->constructAuxData();
 

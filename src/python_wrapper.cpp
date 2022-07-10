@@ -121,7 +121,8 @@ void* train(py::array_t<double> Y, py::object general_X, std::string model_name,
     config->model_is_regression = true;
     model = new ABCBoost::Regression(data, config);
   } else {
-    fprintf(stderr, "Unsupported model name %s\n", config->model_name.c_str());
+    printf("[ERROR] Unsupported model name %s\n", config->model_name.c_str());
+    return nullptr;
   }
 
   py::array_t<double> Ycopy = Y.attr("copy")();
@@ -136,7 +137,7 @@ void* train(py::array_t<double> Y, py::object general_X, std::string model_name,
   config->mem_n_row = n_row;
   config->mem_n_col = n_col;
 
-  data->loadData();
+  data->loadData(true);
   model->init();
   model->loadModel();
   model->setupExperiment();
@@ -214,7 +215,7 @@ py::array_t<double> test(py::array_t<double> Y, py::object general_X, void* py_m
   config->from_wrapper = true;
   config->save_log = false;
 
-  model->getData()->loadData();
+  model->getData()->loadData(true);
   model->init();
   model->setupExperiment();
 
@@ -237,12 +238,6 @@ void saveModel(void* py_model, std::string path) {
   model->getConfig()->from_wrapper = true;
   model->getConfig()->model_suffix = "";
 
-  std::string mapping_name = path + model->getConfig()->mapping_suffix;
-  FILE* fp = fopen(mapping_name.c_str(), "wb");
-  model->getData()->saveData(fp);
-  fclose(fp);
-  model->getConfig()->model_mapping_name = mapping_name;
-  printf("saving mapping name %s\n",mapping_name.c_str());
   model->saveModel(model->getConfig()->model_n_iterations);
 }
 
@@ -254,8 +249,9 @@ void* loadModel(std::string path) {
   if (model_header.config.null_config == false) {
     *config = model_header.config;
     config->model_mode = "test";
-    printf("config->model_mapping_name (%s)\n",
-           config->model_mapping_name.c_str());
+  } else {
+    printf("[ERROR] Model file not found: -model (%s)\n",config->model_pretrained_path.c_str());
+    return nullptr;
   }
 
   ABCBoost::Data* data = new ABCBoost::Data(config);
@@ -273,7 +269,8 @@ void* loadModel(std::string path) {
     config->model_is_regression = true;
     model = new ABCBoost::Regression(data, config);
   } else {
-    fprintf(stderr, "Unsupported model name %s\n", config->model_name.c_str());
+    printf("[ERROR] Unsupported model name %s\n", config->model_name.c_str());
+    return nullptr;
   }
 
   config->model_pretrained_path = path;
@@ -281,14 +278,7 @@ void* loadModel(std::string path) {
   config->load_data_head_only = true;
   config->model_suffix = "";
   
-  std::string mapping_name = config->model_mapping_name;
-  FILE* fp = fopen(mapping_name.c_str(), "rb");
-  if (fp == NULL) {
-    printf("[ERROR] mapping file not found! (%s)\n", mapping_name.c_str());
-    return nullptr;
-  }
-  data->data_header = ABCBoost::DataHeader::deserialize(fp);
-  fclose(fp);
+  data->data_header = model_header.auxDataHeader;
 
   model->init();
   model->loadModel();

@@ -28,12 +28,14 @@ namespace ABCBoost {
 struct ModelHeader {
   // config info
   Config config;
-	DataHeader auxDataHeader; // only for no_map case
+	DataHeader auxDataHeader; // saves mapping
 
   void serialize(FILE* fp) { 
 		config.serialize(fp);
 		if(config.no_map == true)
 			auxDataHeader.serialize_no_map(fp);
+    else
+			auxDataHeader.serialize(fp);
 	}
 
   static ModelHeader deserialize(FILE* fp) {
@@ -41,6 +43,8 @@ struct ModelHeader {
     model_header.config = Config::deserialize(fp);
 		if(model_header.config.no_map == true)
 			model_header.auxDataHeader = DataHeader::deserialize_no_map(fp);
+    else
+			model_header.auxDataHeader = DataHeader::deserialize(fp);
     return model_header;
   }
 };

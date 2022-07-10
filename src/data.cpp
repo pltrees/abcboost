@@ -78,7 +78,7 @@ void Data::loadRankQuery() {
  * Load data from the data path.
  * @param[in] fileptr: Pointer to the FILE object
  */
-void Data::loadData(FILE* fileptr) {
+void Data::loadData(bool from_scratch) {
   if (!doesFileExist(config->data_path) && config->from_wrapper == false) {
     fprintf(stderr, "[ERROR] Data file does not exist!\n");
     exit(1);
@@ -119,10 +119,10 @@ void Data::loadData(FILE* fileptr) {
 	bool is_created_quantization = false;
 
 	if (config->no_map == true){
-		load(NULL);
+		load();
     printf("-- skip adaptive quantization, using truncated raw data.\n");
-	}else if (fileptr != NULL) {
-    load(fileptr);
+	}else if (from_scratch == false) {
+    load();
     printf("-- finish loading adaptive quantization in %.4f seconds.\n",
            timer.get_time_restart());
   } else if (config->model_mode == "train") {
@@ -131,7 +131,7 @@ void Data::loadData(FILE* fileptr) {
            timer.get_time_restart());
 		is_created_quantization = true;
   } else if (config->from_wrapper) {
-    load(NULL);
+    load();
   } else {
     printf("[Error] No .map file found in test!\n");
     exit(1);
@@ -153,14 +153,6 @@ void Data::loadData(FILE* fileptr) {
   printSummary();
 
   std::string mapping_name = config->getMappingName();
-//  if (!doesFileExist(mapping_name)) {
-  if (is_created_quantization && config->from_wrapper == false) {
-    FILE* fp = fopen(mapping_name.c_str(), "wb");
-    saveData(fp);
-    fclose(fp);
-  }
-  if(config->from_wrapper == false)
-    config->model_mapping_name = mapping_name;
 }
 
 /**
@@ -432,7 +424,7 @@ void Data::featureCleanUp() {
  * Helper method to load pretrained data information.
  * @param[in] fp: Pointer to the FILE object
  */
-void Data::load(FILE* fp) {
+void Data::load() {
   // load data information from file
 
   size_t ret = 0;
@@ -449,7 +441,7 @@ void Data::load(FILE* fp) {
     Xv.clear();
     data_header.n_feats = config->mem_n_col;
   } else {
-    data_header = DataHeader::deserialize(fp);
+    //;
   }
   Xv_raw.resize(data_header.n_feats);
   Xi.resize(data_header.n_feats);

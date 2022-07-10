@@ -107,7 +107,7 @@ void GradientBoosting::print_train_message(int iter,double loss,double iter_time
 
 ModelHeader GradientBoosting::loadModelHeader(Config *config) {
   FILE *fp = fopen(config->model_pretrained_path.c_str(), "rb");
-  if (fp == NULL) {
+  if (config->model_pretrained_path == "" || fp == NULL) {
     ModelHeader ret = ModelHeader();
     ret.config.null_config = true;
     return ret;
@@ -397,8 +397,7 @@ void GradientBoosting::saveModel(int iter) {
   model_header.config = *config;
   model_header.config.model_n_iterations = iter;
   
-  if(config->no_map == true)
-    model_header.auxDataHeader = data->data_header;
+  model_header.auxDataHeader = data->data_header;
   model_header.serialize(model_out);
   serializeTrees(model_out, iter);
   fclose(model_out);
@@ -1678,6 +1677,7 @@ void ABCMart::saveModel(int iter) {
   model_header.config = *config;
   model_header.config.model_n_iterations = iter;
 
+  model_header.auxDataHeader = data->data_header;
   model_header.serialize(model_out);
   serializeTrees(model_out, iter);
   // save trees

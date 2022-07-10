@@ -33,26 +33,17 @@ int main(int argc, char* argv[]) {
     *config = model_header.config;
     config->parseArguments(argc, argv);
     config->model_mode = "test";
-    printf("config->model_mapping_name (%s)\n",
-           config->model_mapping_name.c_str());
+  } else {
+    printf("[ERROR] Model file not found: -model (%s)\n",config->model_pretrained_path.c_str());
+    exit(1);
   }
 
   config->sanityCheck();
 
   std::unique_ptr<ABCBoost::Data> data =
       std::unique_ptr<ABCBoost::Data>(new ABCBoost::Data(config.get()));
-  std::string mapping_name = config->model_mapping_name;
-  FILE* fp = fopen(mapping_name.c_str(), "rb");
-  if(config->no_map){
-    data->data_header = model_header.auxDataHeader;
-    data->loadData(NULL);
-  }else if (fp != NULL) {
-    data->loadData(fp);
-    fclose(fp);
-  } else {
-    printf("[Error] No .map file found in test! (%s)\n", mapping_name.c_str());
-    exit(1);
-  }
+  data->data_header = model_header.auxDataHeader;
+  data->loadData(false);
 
   std::unique_ptr<ABCBoost::GradientBoosting> model;
 
