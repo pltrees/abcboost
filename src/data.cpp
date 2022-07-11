@@ -306,6 +306,7 @@ void Data::adaptiveQuantization() {
   for (int j = 0; j < data_header.n_feats; ++j) {
     Xv[j].resize(Xv_raw[j].size());
   }
+  config->default_label = data_header.idx2label.size() > 0 ? data_header.idx2label[0] : Y[0];
 
   std::vector<std::string> additional_files = split(config->additional_files);
   std::vector<std::unique_ptr<Data>> data_pool;
@@ -517,7 +518,7 @@ void Data::loadMemoryKeyValueFormat(const double* Y_matrix, const std::vector<st
 			if(config->no_label == false){
       	Y_global[t].push_back(Y_matrix[i]);
 			}else{
-      	Y_global[t].push_back(data_header.idx2label[0]);
+      	Y_global[t].push_back(config->default_label);
 			}
       int j;
       double j_val;
@@ -692,7 +693,7 @@ void Data::loadMatrixFormat(std::string path) {
       	pos = strtok_r(token, delimiter, &ptr);
       	Y_global[t].push_back(atof(pos));
 			}else{
-      	Y_global[t].push_back(data_header.idx2label[0]);
+      	Y_global[t].push_back(config->default_label);
 			}
       int j = 1;
       while (true) {
@@ -788,7 +789,7 @@ void Data::loadLibsvmFormat(std::string path) {
 				pos = strtok_r(token, delimiter, &ptr);
       	Y_global[t].push_back(atof(pos));
 			}else{
-      	Y_global[t].push_back(data_header.idx2label[0]);
+      	Y_global[t].push_back(config->default_label);
 			}
       int j;
       double j_val;

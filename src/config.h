@@ -106,6 +106,7 @@ class Config {
   std::string additional_files_no_label = "";
   bool no_map = false;
   bool no_label = false;
+  double default_label = 0;
   double stop_tolerance = 2e-14;
   double regression_stop_factor = 1e-5;
   std::string map_dump_format = "";
@@ -209,6 +210,7 @@ class Config {
     saveString(additional_files, fp);
     saveString(additional_files_no_label, fp);
     fwrite(&no_map, sizeof(bool), 1, fp);
+    fwrite(&default_label, sizeof(double), 1, fp);
     fwrite(&stop_tolerance, sizeof(double), 1, fp);
     fwrite(&regression_stop_factor, sizeof(double), 1, fp);
 
@@ -299,6 +301,7 @@ class Config {
     loadString(additional_files, fp);
     loadString(additional_files_no_label, fp);
     ret += fread(&no_map, sizeof(bool), 1, fp);
+    ret += fread(&default_label, sizeof(double), 1, fp);
     ret += fread(&stop_tolerance, sizeof(double), 1, fp);
     ret += fread(&regression_stop_factor, sizeof(double), 1, fp);
 
