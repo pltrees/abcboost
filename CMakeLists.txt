@@ -4,7 +4,7 @@ project(ABCBoost)
 if (CUDA)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native")
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -flto -fwhole-program")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -flto -fwhole-program")
 endif()
 set(CMAKE_CXX_STANDARD 11)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
@@ -13,7 +13,12 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
 file(GLOB SOURCE_FILES src/*.h src/*.cpp)
 
 option(CUDA "cuda" OFF)
-option(OMP "omp" ON)
+option(OMP "omp" OFF)
+option(NATIVE "native" OFF)
+
+if (NATIVE)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+endif()	
 
 add_definitions(-w)
 

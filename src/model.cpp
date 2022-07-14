@@ -646,7 +646,7 @@ void Regression::print_test_message(int iter,double iter_time,double& low_loss){
     printf("%4d | l2_loss: %20.14e | %s: %-20.14e | time: %.5f\n", iter,
        l2_loss, loss_name.c_str(), loss, iter_time);
   }else{
-    printf("| epoch: %4d | l2_loss: %20.14e | time: %.5f |\n", iter,
+    printf("%4d | l2_loss: %20.14e | time: %.5f\n", iter,
        loss, iter_time);
   }
     
@@ -1532,7 +1532,7 @@ void ABCMart::train_worst() {
 
     double loss = getLoss();
     if ((m + 1) % config->model_eval_every == 0)
-      printf("| epoch: %4d | loss: %20.14e | acc: %.4f | time: %.5f |\n", m + 1,
+      printf("%4d | loss: %20.14e | acc: %.4f | time: %.5f\n", m + 1,
              loss, getAccuracy(), t1.get_time_restart());
     if (m < config->model_n_iterations - 1) {
       base_classes[m + 1] = argmax(class_losses);

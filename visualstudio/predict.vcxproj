@@ -24,6 +24,7 @@
     <ProjectGuid>{1866aa30-e3bf-4f74-b37d-9c2e379c147d}</ProjectGuid>
     <RootNamespace>predict</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>abcboost_predict</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

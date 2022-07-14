@@ -1,0 +1,3 @@
+PKG_CPPFLAGS=-DOMP -fopenmp -DUSE_R_CMD -g -w
+PKG_LIBS=-fopenmp -g -w
+

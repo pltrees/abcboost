@@ -24,7 +24,7 @@
     <ProjectGuid>{0d3f0597-bce6-44c3-84c5-f2873af0167c}</ProjectGuid>
     <RootNamespace>abcboost</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>train</ProjectName>
+    <ProjectName>abcboost_train</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

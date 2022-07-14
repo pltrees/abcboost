@@ -2132,14 +2132,14 @@ int GradientBoostingGPU::computeErr(){
 
 void GradientBoostingGPU::print_train_message(int iter,double loss,double iter_time){
   int err = computeErr();
-  printf("| epoch: %4d | loss: %20.14e | errors: %7d | time: %.5f |\n", iter,
+  printf("%4d | loss: %20.14e | errors: %7d | time: %.5f\n", iter,
        loss, err, iter_time);
   fprintf(log_out,"%4d %20.14e %7d %.5f\n", iter,
        loss, err, iter_time);
 }
 
 void RegressionGPU::print_train_message(int iter,double loss,double iter_time){
-  printf("| epoch: %4d | loss: %20.14e | time: %.5f |\n", iter,
+  printf("%4d | loss: %20.14e | time: %.5f\n", iter,
        loss, iter_time);
   fprintf(log_out,"%4d %20.14e %.5f\n", iter,
        loss, iter_time);

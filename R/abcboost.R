@@ -10,7 +10,7 @@
 # limitations under the License.
 
 
-abcboost_train <- function(train_Y,train_X,model_name,iter,leaves,shinkage,search = 1,gap = 0,params=NULL){
+abcboost_train <- function(train_Y,train_X,model_name,iter,leaves,shinkage,search = 2,gap = 5,params=NULL){
   train_Y = as.numeric(train_Y)
   if(is(train_X,'sparseMatrix') == FALSE){
     train_X = as.matrix(train_X)
