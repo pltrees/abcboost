@@ -83,7 +83,7 @@ Users can replace `robustlogit` by `mart` to test different algorithms.
 
 ### Multi-Class Classification (Aaptive Base Class Robust LogitBoost) 
 
-We support four training methods: (1) `robustlogit` (2) `abcrobustlogit` (3) `mart` (4) `abcmart`. The following example is for `abcrobustlogit` on `covtype` dataset which has `7` classes. In order to identify the `base class`, we need to specify the `-search' parameter (between 1 and 7 for this dataset) and `-gap` parameter (`5` by default) : 
+We support four training methods: `robustlogit`,  `abcrobustlogit`, `mart`, and `abcmart`. The following example is for `abcrobustlogit` on `covtype` dataset which has `7` classes. In order to identify the `base class`, we need to specify the `-search` parameter (between 1 and 7 for this dataset) and `-gap` parameter (`5` by default) : 
 ```
 ./abcboost_train -method abcrobustlogit -data data/covtype.train.csv -J 20 -v 0.1 -iter 1000 -search 2 -gap 10
 ./abcboost_predict -data data/covtype.test.csv -model covtype.train.csv_abcrobustlogit2g10_J20_v0.1_w0.model 
@@ -109,7 +109,7 @@ Ranking tasks are supported by using `-method lambdarank`. Note that the query/g
 ```
 ./abcboost_train -method lambdarank -data data/mslr10k.train -query data/mslr10k.train.query -J 20 -v 0.1 -iter 100 
 ./abcboost_predict -data data/mslr10k.test -query data/mslr10k.test.query -model mslr10k.train_lambdarank_J20_v0.1.model
-
+```
 
 ### Feature Binning (Histograms) (`-data_max_n_bins`)
 
