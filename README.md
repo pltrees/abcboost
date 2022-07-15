@@ -309,9 +309,9 @@ Before the compilation, `pybind11` should be installed:
 
 `python3 -m pip install pybind11`
 
-To compile the single-thread version:
+To compile the single-thread version on Linux:
 ```
-cd abcboost
+cd python/linux
 bash compile_py.sh
 ```
 After the compilation, a shared library `abcboost.so` is generated.
@@ -321,11 +321,11 @@ Paste the following code in a `python3` interactive shell:
 ```
 import numpy as np
 # We use a matrix-format sample data here
-data = np.genfromtxt('data/covtype.train.csv',delimiter=',').astype(float)
+data = np.genfromtxt('../../data/covtype.train.csv',delimiter=',').astype(float)
 #
 Y = data[:,0]
 X = data[:,1:]
-data = np.genfromtxt('data/covtype.test.csv',delimiter=',').astype(float)
+data = np.genfromtxt('../../data/covtype.test.csv',delimiter=',').astype(float)
 testY = data[:,0]
 testX = data[:,1:]
 import abcboost
@@ -342,8 +342,8 @@ res = abcboost.test(testY,testX,model)
 import sklearn
 import sklearn.datasets
 # X is a scipy.sparse matrix
-[X, Y] = sklearn.datasets.load_svmlight_file('data/covtype.train.libsvm')
-[testX, testY] = sklearn.datasets.load_svmlight_file('data/covtype.train.libsvm')
+[X, Y] = sklearn.datasets.load_svmlight_file('../../data/covtype.train.libsvm')
+[testX, testY] = sklearn.datasets.load_svmlight_file('../../data/covtype.train.libsvm')
 # The training and testing interfaces are unified for both dense and sparse matrices
 model = abcboost.train(Y,X,'abcrobustlogit',100,20,0.1,3,0)
 res = abcboost.test(testY,testX,model)
