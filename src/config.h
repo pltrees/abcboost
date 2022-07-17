@@ -305,6 +305,7 @@ class Config {
     ret += fread(&no_map, sizeof(bool), 1, fp);
     ret += fread(&default_label, sizeof(double), 1, fp);
     ret += fread(&stop_tolerance, sizeof(double), 1, fp);
+    ret += fread(&regression_stop_factor, sizeof(double), 1, fp);
     ret += fread(&gbrank_tau, sizeof(double), 1, fp);
 
     // Rank Query File
