@@ -96,7 +96,6 @@ class GradientBoosting {
   virtual void test();
   virtual void train();
 
-  std::pair<double, double> getNDCG();
   virtual void savePrediction();
 
   void returnPrediction(double* ret);
@@ -115,6 +114,11 @@ class GradientBoosting {
 	void print_test_message(int iter,double iter_time,int& low_err);
 	virtual void print_test_message(int iter,double iter_time,double& low_loss) {}
 	virtual void print_train_message(int iter,double loss,double iter_time);
+	
+  // only for ranking
+  virtual void print_rank_test_message(int iter,double iter_time);
+  virtual void print_rank_train_message(int iter,double NDCG,double iter_time);
+  std::pair<double,double> getNDCG();
 };
 
 class Regression : public GradientBoosting {
@@ -195,13 +199,25 @@ class LambdaMart : public GradientBoosting {
   void test();
   void train();
   void savePrediction();
-  std::pair<double,double> getNDCG();
-  void print_train_message(int iter,double NDCG,double iter_time);
-  void print_test_message(int iter,double iter_time);
 
  private:
   void computeHessianResidual();
 };
+
+class GBRank : public GradientBoosting {
+ public:
+  GBRank(Data* data, Config* config);
+  void test();
+  void train();
+  void savePrediction();
+
+ private:
+  double tau = 0.1;
+  double tau2 = tau;
+  void computeHessianResidual();
+  void GBupdateF(int k, Tree* currTree,int n_iter);
+};
+
 }  // namespace ABCBoost
 
 #endif  // ABCBOOST_MODEL_H

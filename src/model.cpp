@@ -130,19 +130,9 @@ void GradientBoosting::saveF() {
 }
 
 void GradientBoosting::returnPrediction(double *ret) {
-  if (config->model_mode == "test_rank") {
+  if (config->model_name == "lambdarank" || config->model_name == "lambdamart" || config->model_name == "gbrank" || config->model_name == "regression") {
     for (size_t i = 0; i < data->n_data; ++i) {
-      std::vector<double> prob;
-      prob.resize(data->data_header.n_classes);
-      for (int k = 0; k < data->data_header.n_classes; ++k) {
-        prob[k] = F[k][i];
-      }
-      softmax(prob);
-      double S = 0;
-      for (int k = 0; k < data->data_header.n_classes; ++k) {
-        S += prob[k] * k;
-      }
-      ret[i] = S;
+      ret[i] = F[0][i];
     }
   } else {
     for (size_t i = 0; i < data->n_data; ++i) {
@@ -162,26 +152,11 @@ void GradientBoosting::savePrediction() {
   std::string probability_file = config->formatted_output_name + ".probability";
   FILE *fp = fopen(prediction_file.c_str(), "w");
   FILE *fprob = NULL;
-  if (config->model_mode == "test_rank") {
-    for (size_t i = 0; i < data->n_data; ++i) {
-      std::vector<double> prob;
-      prob.resize(data->data_header.n_classes);
-      for (int k = 0; k < data->data_header.n_classes; ++k) {
-        prob[k] = F[k][i];
-      }
-      softmax(prob);
-      double S = 0;
-      for (int k = 0; k < data->data_header.n_classes; ++k) {
-        S += prob[k] * k;
-      }
-      fprintf(fp, "%.5f\n", S);
-    }
-  } else if (config->model_name == "regression"){
+  if (config->model_name == "lambdarank" || config->model_name == "lambdamart" || config->model_name == "gbrank" || config->model_name == "regression") {
     for (size_t i = 0; i < data->n_data; ++i) {
       fprintf(fp, "%.5f ", F[0][i]);
       fprintf(fp, "\n");
     }
-    
   }else {
     if (config->save_prob){
       fprob = fopen(probability_file.c_str(), "w");
@@ -1766,7 +1741,7 @@ void LambdaMart::savePrediction(){
   GradientBoosting::savePrediction();
 }
 
-void LambdaMart::print_test_message(int iter,double iter_time){
+void GradientBoosting::print_rank_test_message(int iter,double iter_time){
   if(config->no_label)
     return;
   auto p = getNDCG();
@@ -1806,7 +1781,7 @@ void LambdaMart::test() {
         }
       }
     }
-    print_test_message(m + 1,t1.get_time_restart());
+    print_rank_test_message(m + 1,t1.get_time_restart());
   }
 }
 
@@ -1839,7 +1814,7 @@ void LambdaMart::train() {
       additive_trees[m][k] = std::unique_ptr<Tree>(tree);
     }
     auto p = getNDCG();
-    print_train_message(m + 1,p.second,t1.get_time_restart());
+    print_rank_train_message(m + 1,p.second,t1.get_time_restart());
     if (config->save_model && (m+1) % config->model_save_every == 0) saveModel(m+1);
   }
   printf("Training has taken %.5f seconds\n", t2.get_time());
@@ -1849,7 +1824,7 @@ void LambdaMart::train() {
 
 }
 
-void LambdaMart::print_train_message(int iter,double NDCG,double iter_time){
+void GradientBoosting::print_rank_train_message(int iter,double NDCG,double iter_time){
   printf("%4d | NDCG: %20.14e | time: %.5f\n", iter,
        NDCG, iter_time);
 #ifdef USE_R_CMD
@@ -1948,7 +1923,7 @@ void LambdaMart::computeHessianResidual() {
 }
 
 
-std::pair<double,double> LambdaMart::getNDCG(){
+std::pair<double,double> GradientBoosting::getNDCG(){
   if(data->rank_groups.size() == 0 || data->rank_groups[data->rank_groups.size() - 1].second != data->n_data){
     fprintf(stderr,"[Error] query file does not match data!\n");
     exit(1);
@@ -1975,5 +1950,111 @@ std::pair<double,double> LambdaMart::getNDCG(){
   return std::make_pair(avgNDCG_count0,avgNDCG_count1);
 }
 
+GBRank::GBRank(Data* data, Config* config) : GradientBoosting(data,config){
+  tau = tau2 = config->gbrank_tau;
+}
+
+void GBRank::train(){
+  data->loadRankQuery();
+  // set up buffers for OpenMP
+  std::vector<std::vector<std::vector<unsigned int>>> buffer =
+      GradientBoosting::initBuffer();
+  // build one tree if it is binary prediction
+  int K = 1;
+
+  Utils::Timer t1, t2;
+  t1.restart(); t2.restart();
+  config->model_use_logit = true;
+  for (int m = start_epoch; m < config->model_n_iterations; m++) {
+    computeHessianResidual();
+    zeroBins();
+    Tree *tree = new Tree(data, config);
+    tree->init(&hist, &buffer[0], &buffer[1],
+               &feature_importance, &(hessians[0]), &(residuals[0]),ids_tmp.data(),H_tmp.data(),R_tmp.data());
+    tree->buildTree(&ids, &fids);
+    GBupdateF(0, tree,m + 1);
+		additive_trees[m][0] = std::unique_ptr<Tree>(tree);
+    auto p = getNDCG();
+    print_rank_train_message(m + 1,p.second,t1.get_time_restart());
+    if (config->save_model && (m+1) % config->model_save_every == 0) saveModel(m+1);
+  }
+  printf("Training has taken %.5f seconds\n", t2.get_time());
+
+  if (config->save_model) saveModel(config->model_n_iterations);
+  getTopFeatures();
+}
+
+void GBRank::computeHessianResidual() {
+  std::vector<double> gb_label(data->n_data,0.0);
+  std::vector<int> gb_label_cnt(data->n_data,0);
+  int negs_cnt = 0;
+	#pragma omp parallel for schedule(guided)
+  for(int pp = 0;pp < data->rank_groups.size();++pp){
+		const auto& p = data->rank_groups[pp];
+    const auto& start = p.first;
+    const auto& end = p.second;
+    for(int i = start;i < end;++i){
+      for(int j = start;j < end;++j){
+        if(F[0][i] < F[0][j] + tau && data->Y[i] > data->Y[j]){
+          gb_label[i] += F[0][j] + tau2;
+          ++gb_label_cnt[i];
+          gb_label[j] += F[0][i] - tau2;
+          ++gb_label_cnt[j];
+          ++negs_cnt;
+        }
+      }
+    }
+  }
+  #pragma omp parallel for schedule(static) if (config->use_omp)
+  for(int i = 0; i < data->n_data; i++) {
+    residuals[i] = gb_label_cnt[i] != 0 ? -1.0*(-gb_label[i]) : 0;
+    hessians[i] = gb_label_cnt[i] != 0 ? 1 : 0;
+  }
+}
+
+
+void GBRank::GBupdateF(int k, Tree *tree,int n_iter) {
+  std::vector<unsigned int> &ids = tree->ids;
+  std::vector<double> &f = F[k];
+  for (int lf = 0; lf < tree->n_leaves; ++lf) {
+    int leaf_id = tree->leaf_ids[lf];
+    if(leaf_id < 0)
+        continue;
+    Tree::TreeNode node = tree->nodes[leaf_id];
+    double update = config->model_shrinkage * node.predict_v;
+    unsigned int start = node.start, end = node.end;
+    #pragma omp parallel for if (config->use_omp)
+    for (int i = start; i < end; ++i)
+      f[ids[i]] = (f[ids[i]] * n_iter + update) / (n_iter + 1);
+  }
+  tree->freeMemory();
+}
+
+
+void GBRank::test() {
+  std::vector<std::vector<std::vector<unsigned int>>> buffer =
+      GradientBoosting::initBuffer();
+
+  Utils::Timer t1;
+  t1.restart();
+
+  data->loadRankQuery();
+  for (int m = 0; m < config->model_n_iterations; m++) {
+    if (additive_trees[m][0] != NULL) {
+      additive_trees[m][0]->init(nullptr, &buffer[0], &buffer[1],
+                                   nullptr, nullptr, nullptr,ids_tmp.data(),H_tmp.data(),R_tmp.data());
+      std::vector<double> updates = additive_trees[m][0]->predictAll(data);
+      for (int i = 0; i < data->n_data; i++) {
+        F[0][i] = ((m + 1) * F[0][i] + updates[i] * config->model_shrinkage) / (m + 2);
+      }
+    }
+    print_rank_test_message(m + 1,t1.get_time_restart());
+  }
+}
+
+
+void GBRank::savePrediction(){
+	GradientBoosting::savePrediction();
+}
 
 }  // namespace ABCBoost

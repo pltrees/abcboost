@@ -92,6 +92,14 @@ SEXP train(SEXP Y, SEXP X, SEXP row, SEXP col, SEXP r_model_name, SEXP r_iter, S
   } else if (config->model_name == "regression") {
     config->model_is_regression = true;
     model = new ABCBoost::Regression(data, config);
+  } else if (config->model_name == "lambdamart" || config->model_name == "lambdarank") {
+    config->model_is_regression = true;
+		config->model_use_logit = true;
+    model = new ABCBoost::LambdaMart(data, config);
+  } else if (config->model_name == "gbrank") {
+    config->model_is_regression = 1;
+		config->model_use_logit = true;
+    model = new ABCBoost::GBRank(data, config);
   } else {
     printf("[ERROR] Unsupported model name %s\n", config->model_name.c_str());
     return R_NilValue;
@@ -200,6 +208,14 @@ SEXP train_sparse(SEXP Y, SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x
   } else if (config->model_name == "regression") {
     config->model_is_regression = true;
     model = new ABCBoost::Regression(data, config);
+  } else if (config->model_name == "lambdamart" || config->model_name == "lambdarank") {
+    config->model_is_regression = true;
+		config->model_use_logit = true;
+    model = new ABCBoost::LambdaMart(data, config);
+  } else if (config->model_name == "gbrank") {
+    config->model_is_regression = 1;
+		config->model_use_logit = true;
+    model = new ABCBoost::GBRank(data, config);
   } else {
     printf("[ERROR] Unsupported model name %s\n", config->model_name.c_str());
     return R_NilValue;
@@ -346,6 +362,14 @@ SEXP loadModel(SEXP r_path) {
   } else if (config->model_name == "regression") {
     config->model_is_regression = true;
     model = new ABCBoost::Regression(data, config);
+  } else if (config->model_name == "lambdamart" || config->model_name == "lambdarank") {
+    config->model_is_regression = true;
+		config->model_use_logit = true;
+    model = new ABCBoost::LambdaMart(data, config);
+  } else if (config->model_name == "gbrank") {
+    config->model_is_regression = 1;
+		config->model_use_logit = true;
+    model = new ABCBoost::GBRank(data, config);
   } else {
     printf("[ERROR] Unsupported model name %s\n", config->model_name.c_str());
     return R_NilValue;

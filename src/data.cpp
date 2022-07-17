@@ -141,7 +141,7 @@ void Data::loadData(bool from_scratch) {
   printf("-- finish restoring dense features in %.4f seconds.\n",
          timer.get_time_restart());
   // normalize labels to be consecutive integers
-  if (config->model_name != "regression" && config->model_name != "lambdamart" && config->model_name != "gbrank")
+  if (config->model_name != "regression" && config->model_name != "lambdamart" && config->model_name != "lambdarank" && config->model_name != "gbrank")
     normalizeLabels();
   else
     data_header.n_classes = 1;

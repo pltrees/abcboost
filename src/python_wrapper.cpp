@@ -120,6 +120,14 @@ void* train(py::array_t<double> Y, py::object general_X, std::string model_name,
   } else if (config->model_name == "regression") {
     config->model_is_regression = true;
     model = new ABCBoost::Regression(data, config);
+  } else if (config->model_name == "lambdamart" || config->model_name == "lambdarank") {
+    config->model_is_regression = true;
+		config->model_use_logit = true;
+    model = new ABCBoost::LambdaMart(data, config);
+  } else if (config->model_name == "gbrank") {
+    config->model_is_regression = 1;
+		config->model_use_logit = true;
+    model = new ABCBoost::GBRank(data, config);
   } else {
     printf("[ERROR] Unsupported model name %s\n", config->model_name.c_str());
     return nullptr;
@@ -271,6 +279,14 @@ void* loadModel(std::string path) {
   } else if (config->model_name == "regression") {
     config->model_is_regression = true;
     model = new ABCBoost::Regression(data, config);
+  } else if (config->model_name == "lambdamart" || config->model_name == "lambdarank") {
+    config->model_is_regression = true;
+		config->model_use_logit = true;
+    model = new ABCBoost::LambdaMart(data, config);
+  } else if (config->model_name == "gbrank") {
+    config->model_is_regression = 1;
+		config->model_use_logit = true;
+    model = new ABCBoost::GBRank(data, config);
   } else {
     printf("[ERROR] Unsupported model name %s\n", config->model_name.c_str());
     return nullptr;

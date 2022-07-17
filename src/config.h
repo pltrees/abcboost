@@ -109,6 +109,7 @@ class Config {
   double default_label = 0;
   double stop_tolerance = 2e-14;
   double regression_stop_factor = 1e-5;
+  double gbrank_tau = 0.1;
   std::string map_dump_format = "";
 
   // Rank Query File
@@ -213,6 +214,7 @@ class Config {
     fwrite(&default_label, sizeof(double), 1, fp);
     fwrite(&stop_tolerance, sizeof(double), 1, fp);
     fwrite(&regression_stop_factor, sizeof(double), 1, fp);
+    fwrite(&gbrank_tau, sizeof(double), 1, fp);
 
     saveString(rank_query_file, fp);
     saveString(prediction_file, fp);
@@ -303,7 +305,7 @@ class Config {
     ret += fread(&no_map, sizeof(bool), 1, fp);
     ret += fread(&default_label, sizeof(double), 1, fp);
     ret += fread(&stop_tolerance, sizeof(double), 1, fp);
-    ret += fread(&regression_stop_factor, sizeof(double), 1, fp);
+    ret += fread(&gbrank_tau, sizeof(double), 1, fp);
 
     // Rank Query File
     loadString(str, fp);
@@ -360,6 +362,7 @@ class Config {
 * `-stop_tolerance` (default 2e-14) It works for all non-regression tasks, e.g., classification. The training will stop when the total training loss is less than the stop tolerance.\n\
 * `-regression_stop_factor` (default 1e-5) The auto stopping criterion is different from the classification task because the scale of the regression target is unknown. We adaptively set the regression stop tolerate to `regression_stop_factor * total_loss / sum(y^p)`, where `y` is the regression targets and `p` is the value specified in `-regression_lp_loss`.\n\
 * `-regression_auto_clip_value` 0/1 (default 1) whether use our adaptive clipping value computation for the predict value on terminal nodes. When enabled, the adaptive clipping value is computed as `tree_clip_value * max_y - min_y` where `tree_clip_value` is set via `-tree_clip_value`, `max_y` and `min_y` are the maximum and minimum regression target value, respectively.\n\
+* `-gbrank_tau` (default 0.1) The tau parameter for gbrank.\n\
 ");
   }
 
@@ -505,6 +508,8 @@ class Config {
         stop_tolerance = stod(value);
       } else if (key == "regression_stop_factor") {
         regression_stop_factor = stod(value);
+      } else if (key == "gbrank_tau") {
+        gbrank_tau = stod(value);
       } else if (key == "map_dump_format" || key == "dump") {
         map_dump_format = value;
       } else if (key == "model_warmup_iter" || key == "warmup_iter") {

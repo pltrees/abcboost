@@ -128,6 +128,11 @@ int main(int argc, char* argv[]) {
 		config->model_use_logit = true;
     model = std::unique_ptr<ABCBoost::GradientBoosting>(
 				new ABCBoost::LambdaMart(data.get(), config.get()));
+  } else if (config->model_name == "gbrank") {
+    config->model_is_regression = 1;
+		config->model_use_logit = true;
+    model = std::unique_ptr<ABCBoost::GradientBoosting>(
+				new ABCBoost::GBRank(data.get(), config.get()));
   } else {
     fprintf(stderr, "Unsupported model name %s\n", config->model_name.c_str());
     exit(1);
