@@ -293,6 +293,8 @@ model = abcboost_train(Y,X,'abcrobustlogit',100,20,0.1,1,0,params);
 % abcboost_save(model,'mymodel.model');
 % model = abcboost_load('mymodel.model');
 res = abcboost_test(testY,testX,model);
+% predict without label 
+res = abcboost_predict(testX,model);
 
 % Sparse matlab matrix is also supported
 % For example, we included the libsvmread.c from the LIBSVM package for data loading
@@ -336,6 +338,8 @@ model = abcboost.train(Y,X,'abcrobustlogit',100,20,0.1,3,0)
 # abcboost.save(model,'mymodel.model')
 # model = abcboost.load('mymodel.model')
 res = abcboost.test(testY,testX,model)
+% predict without label 
+res = abcboost.predict(testX,model)
 # Alternatively, we also support libsvm-format sparse matrix
 # We use sklearn to load libsvm format data as a scipy.sparse matrix
 # sklearn can be installed as: python3 -m pip install scikit-learn

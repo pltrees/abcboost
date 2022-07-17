@@ -11,9 +11,9 @@ build/
 data/
 .*tar.gz
 .exe
+.vs/
 .git/
 .*.cmake
 .*Makefile
-train
-predict
-map
+abcboost_train
+abcboost_predict

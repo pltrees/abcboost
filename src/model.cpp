@@ -861,6 +861,21 @@ void BinaryMart::savePrediction() {
     fclose(fprob);
 }
 
+void BinaryMart::returnPrediction(double* ret) {
+  for (size_t i = 0; i < data->n_data; ++i) {
+    std::vector<double> prob(2);
+    prob[0] = F[i];
+    prob[1] = -F[i];
+    int maxj = prob[0] >= prob[1] ? 0 : 1;
+    int pred = round(data->data_header.idx2label[maxj]);
+    softmax(prob);
+    for (int j = 0; j < data->data_header.n_classes; ++j) {
+      int internal_idx = data->data_header.label2idx[j];
+      ret[j * data->n_data + i] = prob[internal_idx];
+    }
+  }
+}
+
 void BinaryMart::test() {
   std::vector<std::vector<std::vector<unsigned int>>> buffer =
       GradientBoosting::initBuffer();

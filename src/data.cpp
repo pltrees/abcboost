@@ -603,7 +603,11 @@ void Data::loadMemoryColumnMajorMatrix(double* Y_matrix, double* X_matrix,
     int start = t * step, end = std::min(n_lines, (t + 1) * step);
 
     for (int i = start; i < end; ++i) {
-      Y_global[t].push_back(Y_matrix[i]);
+			if(config->no_label == false){
+        Y_global[t].push_back(Y_matrix[i]);
+			}else{
+      	Y_global[t].push_back(config->default_label);
+      }
       for (int j = 0; j < n_col; ++j) {
         double j_val = X_matrix[j * n_row + i];
         if (j_val != 0) {

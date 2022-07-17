@@ -47,7 +47,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs,
 	config->from_wrapper = true;
   config->save_log = false;
 
-	//fprintf(stderr,"aaaaaasize Xi %zu\n",model->getData()->Xi.size());
 	model->getData()->loadData(true);
 	model->init();
 	model->setupExperiment();

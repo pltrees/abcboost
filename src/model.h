@@ -98,7 +98,7 @@ class GradientBoosting {
 
   virtual void savePrediction();
 
-  void returnPrediction(double* ret);
+  virtual void returnPrediction(double* ret);
 
   Config* getConfig() { return config; }
   Data* getData() { return data; }
@@ -149,6 +149,7 @@ class BinaryMart : public GradientBoosting {
 	void updateF(Tree* tree);
 	double getLoss();
   void savePrediction();
+  void returnPrediction(double* ret);
   
 	std::vector<double> F;//, hessians, residuals;
 

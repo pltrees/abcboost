@@ -242,6 +242,97 @@ py::array_t<double> test(py::array_t<double> Y, py::object general_X, void* py_m
   return ret;
 }
 
+py::array_t<double> predict(py::object general_X, void* py_model) {
+  std::string class_name = py::str(general_X.get_type());
+  py::array_t<double> X;
+  std::vector<std::vector<std::pair<int,double>>> kvs;
+  bool is_sparse = false;
+  py::module scipy;
+  try{
+    scipy = py::module::import("scipy.sparse");
+    if(scipy.attr("isspmatrix")(general_X).cast<bool>() == true){
+      is_sparse = true;
+    }
+  }catch(...){
+
+  }
+
+  int n_row = 0;
+  int n_col = 0;
+  if(class_name == "<class 'numpy.ndarray'>"){
+    int dim = py::array_t<double>(general_X).ndim();
+    if(dim != 2){
+      py::print("X should be 2-dimensional. Found",dim);
+      return py::array_t<double>();
+    }
+    n_row = py::array_t<double>(general_X).shape(0);
+    n_col = py::array_t<double>(general_X).shape(1);
+    py::object sh = general_X.attr("shape");
+    X = general_X.attr("ravel")(py::str("F")).attr("reshape")(sh);
+  }else if (is_sparse){
+    py::object csr = general_X.attr("tocsr")();
+    py::array_t<int> idx = py::array_t<int>(csr.attr("indices"));
+    int* pidx = (int*)idx.request().ptr;
+    py::array_t<int> indptr = py::array_t<int>(csr.attr("indptr"));
+    int* pindptr = (int*)indptr.request().ptr;
+    py::array_t<double> data = py::array_t<double>(csr.attr("data"));
+    double* pdata = (double*)data.request().ptr;
+    for(int i = 0;i < indptr.size() - 1;++i){
+      std::vector<std::pair<int,double>> vec;
+      for(int j = pindptr[i];j < pindptr[i + 1];++j){
+        vec.push_back(std::make_pair(pidx[j] + 1,pdata[j]));
+      }
+      kvs.push_back(vec);
+    }
+    py::object sh = csr.attr("shape");
+    n_row = sh.attr("__getitem__")(0).cast<int>();
+    n_col = sh.attr("__getitem__")(1).cast<int>();
+  }else{
+    py::print("Unrecognized matrix X:", py::str(general_X.get_type()));
+    return py::array_t<double>();
+  }
+
+  ABCBoost::GradientBoosting* model =
+      reinterpret_cast<ABCBoost::GradientBoosting*>(py_model);
+  ABCBoost::Config* config = model->getConfig();
+  config->model_mode = "test";
+
+  config->mem_Y_matrix = NULL;
+  if(is_sparse){
+    config->mem_X_kv = kvs;
+    config->mem_is_sparse = true;
+  }else{
+    config->mem_X_matrix = static_cast<double *>(X.request().ptr);
+    config->mem_is_sparse = false;
+  }
+  config->mem_n_row = n_row;
+  config->mem_n_col = n_col;
+  config->from_wrapper = true;
+  config->save_log = false;
+  
+  bool prev_no_label = config->no_label;
+  config->no_label = true;
+
+  model->getData()->loadData(true);
+  model->init();
+  model->setupExperiment();
+
+  model->test();
+  int n_classes = model->getData()->data_header.n_classes;
+  std::vector<double> ans(n_row * n_classes);
+  model->returnPrediction(ans.data());
+  py::array_t<double> ret = py::array_t<double>(n_row * n_classes);
+  double* buff = (double*)ret.request().ptr;
+  for (int j = 0; j < n_classes; ++j){
+    for (int i = 0; i < n_row; ++i){
+      buff[i * n_classes + j] = ans[j * n_row + i];
+    }
+  }
+  ret.resize({n_row,n_classes});
+  config->no_label = prev_no_label;
+  return ret;
+}
+
 void saveModel(void* py_model, std::string path) {
   ABCBoost::GradientBoosting* model =
       reinterpret_cast<ABCBoost::GradientBoosting*>(py_model);
@@ -318,6 +409,9 @@ PYBIND11_MODULE(abcboost, m) {
           py::arg("gap") = 0);
     m.def("test",&test, "test ABCBoost model",
           py::arg("Y"),
+          py::arg("X"),
+          py::arg("model"));
+    m.def("predict",&predict, "predict ABCBoost model",
           py::arg("X"),
           py::arg("model"));
     m.def("load",&loadModel,"load ABCBoost model",

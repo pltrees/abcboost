@@ -62,6 +62,26 @@ abcboost_test <- function(test_Y,test_X,model){
 	return(ret)
 }
 
+abcboost_predict <- function(test_X,model){
+  if(is(test_X,'sparseMatrix') == FALSE){
+    test_X = as.matrix(test_X)
+    if(is.matrix(test_X) == FALSE){
+      stop("test_X must be a 2 dimensional matrix.")
+    }
+  }
+	n_row_x <- nrow(test_X)
+	n_col_x <- ncol(test_X)
+  if(is(test_X, 'sparseMatrix') == TRUE){
+    test_X <- t(as(test_X,'dgCMatrix'))
+    leni = length(test_X@i)
+    lenp = length(test_X@p)
+	  ret <- .Call("predict_sparse",as.integer(test_X@i),as.integer(leni),as.integer(test_X@p),as.integer(lenp),as.double(test_X@x),as.integer(n_row_x),as.integer(n_col_x),model)
+  }else{
+	  ret <- .Call("predict",as.double(test_X),as.integer(n_row_x),as.integer(n_col_x),model)
+  }
+	return(ret)
+}
+
 abcboost_save_model <- function(model,path){
 	.Call("saveModel",model,path)
 }

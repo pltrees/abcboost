@@ -271,6 +271,41 @@ SEXP test(SEXP Y, SEXP X, SEXP row, SEXP col, SEXP r_model) {
   return ret;
 }
 
+SEXP predict(SEXP X, SEXP row, SEXP col, SEXP r_model) {
+  SEXP x = PROTECT(coerceVector(X, REALSXP));
+  int n_row = *INTEGER(row);
+  int n_col = *INTEGER(col);
+
+  ABCBoost::GradientBoosting* model =
+      reinterpret_cast<ABCBoost::GradientBoosting*>(R_ExternalPtrAddr(r_model));
+  ABCBoost::Config* config = model->getConfig();
+  config->model_mode = "test";
+
+  config->mem_Y_matrix = NULL;
+  config->mem_X_matrix = REAL(x);
+  config->mem_n_row = n_row;
+  config->mem_n_col = n_col;
+  config->from_wrapper = true;
+  config->save_log = false;
+  
+  bool prev_no_label = config->no_label;
+  config->no_label = true;
+
+  model->getData()->loadData(true);
+  model->init();
+  model->setupExperiment();
+
+  model->test();
+  int n_classes = model->getData()->data_header.n_classes;
+  std::vector<double> ans(n_row * n_classes);
+  model->returnPrediction(ans.data());
+  SEXP ret = PROTECT(allocMatrix(REALSXP, n_row, n_classes));
+  for (int i = 0; i < n_row * n_classes; ++i) REAL(ret)[i] = ans[i];
+  UNPROTECT(2);
+  config->no_label = prev_no_label;
+  return ret;
+}
+
 SEXP test_sparse(SEXP Y,SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x, SEXP row, SEXP col, SEXP r_model) {
   SEXP xi = PROTECT(coerceVector(X_i,INTSXP));
   SEXP xp = PROTECT(coerceVector(X_p,INTSXP));
@@ -317,6 +352,57 @@ SEXP test_sparse(SEXP Y,SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x, 
   SEXP ret = PROTECT(allocMatrix(REALSXP, n_row, n_classes));
   for (int i = 0; i < n_row * n_classes; ++i) REAL(ret)[i] = ans[i];
   UNPROTECT(5);
+  return ret;
+}
+
+SEXP predict_sparse(SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x, SEXP row, SEXP col, SEXP r_model) {
+  SEXP xi = PROTECT(coerceVector(X_i,INTSXP));
+  SEXP xp = PROTECT(coerceVector(X_p,INTSXP));
+  SEXP xx = PROTECT(coerceVector(X_x,REALSXP));
+  int leni = *INTEGER(r_leni);
+  int lenp = *INTEGER(r_lenp);
+  int* pxi = INTEGER(xi);
+  int* pxp = INTEGER(xp);
+  double* pxx = REAL(xx);
+  std::vector<std::vector<std::pair<int,double>>> kvs;
+  for(int i = 0;i < lenp - 1;++i){
+    std::vector<std::pair<int,double>> vec;
+    for(int j = pxp[i];j < pxp[i + 1];++j){
+      vec.push_back(std::make_pair(pxi[j] + 1,pxx[j]));
+    }
+    kvs.push_back(vec);
+  }
+
+  int n_row = *INTEGER(row);
+  int n_col = *INTEGER(col);
+
+  ABCBoost::GradientBoosting* model =
+      reinterpret_cast<ABCBoost::GradientBoosting*>(R_ExternalPtrAddr(r_model));
+  ABCBoost::Config* config = model->getConfig();
+  config->model_mode = "test";
+
+  config->mem_is_sparse = true;
+  config->mem_Y_matrix = NULL;
+  config->mem_X_kv = kvs;
+  config->mem_n_row = n_row;
+  config->mem_n_col = n_col;
+  config->from_wrapper = true;
+  config->save_log = false;
+  
+  bool prev_no_label = config->no_label;
+  config->no_label = true;
+
+  model->getData()->loadData(true);
+  model->init();
+  model->setupExperiment();
+
+  model->test();
+  int n_classes = model->getData()->data_header.n_classes;
+  std::vector<double> ans(n_row * n_classes);
+  model->returnPrediction(ans.data());
+  SEXP ret = PROTECT(allocMatrix(REALSXP, n_row, n_classes));
+  for (int i = 0; i < n_row * n_classes; ++i) REAL(ret)[i] = ans[i];
+  UNPROTECT(4);
   return ret;
 }
 
