@@ -1951,7 +1951,8 @@ std::pair<double,double> GradientBoosting::getNDCG(){
 }
 
 GBRank::GBRank(Data* data, Config* config) : GradientBoosting(data,config){
-  tau = tau2 = config->gbrank_tau;
+  tau =config->gbrank_tau;
+  tau2 = config->gbrank_update_factor * tau;
 }
 
 void GBRank::train(){
