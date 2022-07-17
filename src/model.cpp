@@ -1663,17 +1663,19 @@ void ABCMart::init() {
   GradientBoosting::init();
   base_classes.resize(config->model_n_iterations, 0);
   class_losses.resize(data->data_header.n_classes, 0.0);
-  std::vector<int> bins(data->data_header.n_classes, 0);
-  for (double y : data->Y) {
-    bins[int(y)]++;
-    class_losses[int(y)] += 1;
-  }
+  if(config->model_mode == "train" && start_epoch == 0){
+    std::vector<int> bins(data->data_header.n_classes, 0);
+    for (double y : data->Y) {
+      bins[int(y)]++;
+      class_losses[int(y)] += 1;
+    }
 
-  int maxCount = 0;
-  for (int i = 0; i < bins.size(); ++i) {
-    if (bins[i] > maxCount) {
-      maxCount = bins[i];
-      base_classes[0] = i;
+    int maxCount = 0;
+    for (int i = 0; i < bins.size(); ++i) {
+      if (bins[i] > maxCount) {
+        maxCount = bins[i];
+        base_classes[0] = i;
+      }
     }
   }
 }
