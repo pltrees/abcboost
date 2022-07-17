@@ -225,8 +225,11 @@ py::array_t<double> test(py::array_t<double> Y, py::object general_X, void* py_m
   model->returnPrediction(ans.data());
   py::array_t<double> ret = py::array_t<double>(n_row * n_classes);
   double* buff = (double*)ret.request().ptr;
-  for (int i = 0; i < n_row * n_classes; ++i)
-    buff[i] = ans[i];
+  for (int j = 0; j < n_classes; ++j){
+    for (int i = 0; i < n_row; ++i){
+      buff[i * n_classes + j] = ans[j * n_row + i];
+    }
+  }
   ret.resize({n_row,n_classes});
   return ret;
 }
