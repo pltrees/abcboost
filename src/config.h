@@ -566,7 +566,6 @@ class Config {
   }
 
   void sanityCheck() {
-    // TODO(@weijie): add a sanity check for the arguments.
   }
 
   std::string getDataName() {

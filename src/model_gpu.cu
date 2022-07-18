@@ -190,7 +190,7 @@ void computeHessianResidualKernel(double* d_Y,double* d_F,double * d_residuals,d
   int tid = threadIdx.x, bid = blockIdx.x;
   int gid = bid * blockDim.x + tid;
   const int step = blockDim.x * gridDim.x;
-  double* prob = new double[n_classes]; //TODO(@weijie): known issue. when have a large number of leaves in exhaustive training, it may crash because of no heap memory
+  double* prob = new double[n_classes]; 
   for(unsigned int i = gid;i < n_data;i += step){
     int label = d_Y[i];
     for(int k = 0;k < n_classes;++k)
@@ -780,7 +780,7 @@ void trySplitBatchKernel(Tree::TreeNode* d_nodes,unsigned int* d_ids,unsigned sh
     }
     __syncthreads();
     
-    // prefix sum // TODO(@weijie): change this to a parallel scan
+    // prefix sum 
     if(tid == 0){
       for(int i = 1;i < bin_size;++i)
         d_hist_count[i] += d_hist_count[i - 1];
@@ -2174,7 +2174,7 @@ void ABCMartGPU::exhaustiveTrain(int n_skip) {
   cudaMalloc(&d_backup_F,sizeof(double) * data->data_header.n_classes * data->n_data);
   cudaMalloc(&d_best_F,sizeof(double) * data->data_header.n_classes * data->n_data);
   Tree::TreeNode* d_best_nodes = NULL;
-  cudaMalloc(&d_best_nodes,sizeof(Tree::TreeNode) * data->data_header.n_classes * (2 * config->tree_max_n_leaves - 1)); //TODO(@weijie): free these memory
+  cudaMalloc(&d_best_nodes,sizeof(Tree::TreeNode) * data->data_header.n_classes * (2 * config->tree_max_n_leaves - 1)); 
   double* d_prob = NULL;
   cudaMalloc(&d_prob,sizeof(double) * data->data_header.n_classes * NUM_BLOCK * NUM_THREAD);
 

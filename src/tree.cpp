@@ -304,7 +304,6 @@ void Tree::buildTree(std::vector<uint> *ids, std::vector<uint> *fids) {
     l = 2 * i + 1;
     r = l + 1;
     if (idx == -1) {
-      // TODO(@weijie): create dummy tree when above fails
       fprintf(stderr, "[INFO] cannot split further.\n");
       break;
     }
@@ -536,7 +535,6 @@ std::vector<double> Tree::predictAll(Data *data) {
   std::vector<uint> ids(n_test);
   std::iota(ids.begin(), ids.end(), 0);
   this->ids = ids;
-  //TODO: fix this not init in test
   nodes[0].start = 0;
   nodes[0].end = n_test;
 
