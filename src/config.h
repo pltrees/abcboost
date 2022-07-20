@@ -106,6 +106,7 @@ class Config {
   std::string additional_files_no_label = "";
   bool no_map = false;
   bool no_label = false;
+  bool test_auc = false;
   double default_label = 0;
   double stop_tolerance = 2e-14;
   double regression_stop_factor = 1e-5;
@@ -362,7 +363,8 @@ class Config {
 * `-save_log`, 0/1 (default 0) whether save the runtime log to file\n\
 * `-save_model`, 0/1 (default 1)\n\
 * `-save_prob`, 0/1 (default 0) whether save the prediction probability for classification tasks\n\
-* `-no_label`, 0/1 (default 0) It should only be enabled to output prediction file when the testing data has no label and `-model_mode` is `test`\n\
+* `-no_label`, 0/1 (default 0) It should only be enabled to output prediction file when the testing data has no label in test\n\
+* `-test_auc`, 0/1 (default 0) whether compute AUC in test\n\
 * `-stop_tolerance` (default 2e-14) It works for all non-regression tasks, e.g., classification. The training will stop when the total training loss is less than the stop tolerance.\n\
 * `-regression_stop_factor` (default 1e-5) The auto stopping criterion is different from the classification task because the scale of the regression target is unknown. We adaptively set the regression stop tolerate to `regression_stop_factor * total_loss / sum(y^p)`, where `y` is the regression targets and `p` is the value specified in `-regression_lp_loss`.\n\
 * `-regression_auto_clip_value` 0/1 (default 1) whether use our adaptive clipping value computation for the predict value on terminal nodes. When enabled, the adaptive clipping value is computed as `tree_clip_value * max_y - min_y` where `tree_clip_value` is set via `-tree_clip_value`, `max_y` and `min_y` are the maximum and minimum regression target value, respectively.\n\
@@ -509,6 +511,8 @@ class Config {
         no_map = stob(value);
       } else if (key == "no_label" || key == "nolabel" || key == "no-label") {
         no_label = stob(value);
+      } else if (key == "test_auc") {
+        test_auc = stob(value);
       } else if (key == "stop_tolerance") {
         stop_tolerance = stod(value);
       } else if (key == "regression_stop_factor") {

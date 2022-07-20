@@ -82,16 +82,32 @@ void GradientBoosting::print_test_message(int iter,double iter_time,int& low_err
   if(config->no_label)
     return;
   double loss = getLoss();
+  double auc = 0;
+  if(config->model_is_regression)
+    config->test_auc = false;
+  if(config->test_auc){
+    auc = getAUC();
+  }
   int err = getError();
   if(low_err > err)
     low_err = err;
-  printf("%4d | loss: %20.14e | errors/lowest: %7d/%-7d | time: %.5f\n", iter,
-       loss, err, low_err, iter_time);
+  if(config->test_auc){
+    printf("%4d | loss: %20.14e | errors/lowest: %7d/%-7d | auc: %.5f | time: %.5f\n", iter,
+         loss, err, low_err, auc, iter_time);
+  }else{
+    printf("%4d | loss: %20.14e | errors/lowest: %7d/%-7d | time: %.5f\n", iter,
+         loss, err, low_err, iter_time);
+  }
 #ifdef USE_R_CMD
  R_FlushConsole();
 #endif
-  if(config->save_log)
-    fprintf(log_out,"%4d %20.14e %7d %.5f\n", iter, loss, err, iter_time);
+  if(config->save_log){
+    if(config->test_auc){
+      fprintf(log_out,"%4d %20.14e %7d %.5f %.5f\n", iter, loss, err, auc, iter_time);
+    }else{
+      fprintf(log_out,"%4d %20.14e %7d %.5f\n", iter, loss, err, iter_time);
+    }
+  }
 }
 
 void GradientBoosting::print_train_message(int iter,double loss,double iter_time){
@@ -313,6 +329,56 @@ double GradientBoosting::getLoss() {
     }
   }
   return loss;
+}
+
+
+double GradientBoosting::getAUC(double* f_values, int k){
+  double auc = 0;
+  std::vector<std::pair<double,int>> logits(data->n_data);
+  int total_positive = 0;
+  #pragma omp parallel for reduction(+:total_positive) schedule(static) if (config->use_omp)
+  for (int i = 0; i < data->n_data; i++) {
+    int positive = (data->Y[i] == k);
+    logits[i] = std::make_pair(f_values[i],positive);
+    total_positive += positive;
+  }
+  int total_negative = data->n_data - total_positive;
+  int false_positive = 0;
+  int true_positive = 0;
+  int false_negative = total_positive;
+  int true_negative = total_negative;
+  double prev_tpr = 0;
+  double prev_fpr = 0;
+  std::sort(logits.begin(),logits.end());
+  for (int i = ((int)logits.size()) - 1;i >= 0;--i){
+    int positive = logits[i].second;
+    true_positive += positive;
+    false_negative -= positive;
+    false_positive += 1 - positive;
+    true_negative -= 1 - positive;
+    if (i == 0 || (i >= 1 && logits[i].first != logits[i - 1].first)){
+      double tpr = true_positive * 1.0 / total_positive;
+      double fpr = false_positive * 1.0 / total_negative;
+      auc += (prev_tpr + tpr) / 2.0 * (fpr - prev_fpr);
+      prev_tpr = tpr;
+      prev_fpr = fpr;
+    }
+  }
+  auc += (prev_tpr + 1) / 2.0 * (1 - prev_fpr); 
+  return auc;
+}
+
+double GradientBoosting::getAUC() {
+  if(data->data_header.n_classes == 2){
+    return getAUC(F[0].data(), 0);
+  }else{
+    double sum_auc = 0;
+    #pragma omp parallel for reduction(+:sum_auc) schedule(static) if (config->use_omp)
+    for(int k = 0;k < data->data_header.n_classes;++k){
+      sum_auc += getAUC(F[k].data(), k);
+    }
+    return sum_auc / data->data_header.n_classes;
+  }
 }
 
 /**
@@ -960,6 +1026,10 @@ int BinaryMart::getError() {
       ++accuracy;
   }
   return data->n_data - accuracy;
+}
+
+double BinaryMart::getAUC() {
+  return GradientBoosting::getAUC(F.data(), 0);
 }
 
 double BinaryMart::getLoss() {

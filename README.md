@@ -195,7 +195,8 @@ The labels in the specified additional files are not used in the training. Only 
 #### Other:
 * `-save_log`, 0/1 (default 0) whether save the runtime log to file
 * `-save_model`, 0/1 (default 1)
-* `-no_label`, 0/1 (default 0) It should only be enabled to output prediction file when the testing data has no label and `-model_mode` is `test`
+* `-no_label`, 0/1 (default 0) It should only be enabled to output prediction file when the testing data has no label in test
+* `-test_auc`, 0/1 (default 0) whether compute AUC in test
 * `-stop_tolerance` (default 2e-14) It works for all non-regression tasks, e.g., classification. The training will stop when the total training loss is less than the stop tolerance.
 * `-regression_stop_factor` (default 1e-5) The auto stopping criterion is different from the classification task because the scale of the regression target is unknown. We adaptively set the regression stop tolerate to `regression_stop_factor * total_loss / sum(y^p)`, where `y` is the regression targets and `p` is the value specified in `-regression_lp_loss`.
 * `-regression_auto_clip_value` 0/1 (default 1) whether use our adaptive clipping value computation for the predict value on terminal nodes. When enabled, the adaptive clipping value is computed as `tree_clip_value * max_y - min_y` where `tree_clip_value` is set via `-tree_clip_value`, `max_y` and `min_y` are the maximum and minimum regression target value, respectively.

@@ -83,6 +83,8 @@ class GradientBoosting {
 	virtual int getError();
   std::string getDataName();
   virtual double getLoss();
+  virtual double getAUC();
+  double getAUC(double* f_values, int k);
   void getTopFeatures(int n = 10);
   virtual void init();
   std::vector<unsigned int> sample(int n, double sample_rate);
@@ -148,6 +150,7 @@ class BinaryMart : public GradientBoosting {
   void init();
 	void updateF(Tree* tree);
 	double getLoss();
+  double getAUC();
   void savePrediction();
   void returnPrediction(double* ret);
   
