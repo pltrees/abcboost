@@ -135,12 +135,14 @@ void GradientBoosting::returnPrediction(double *ret) {
       ret[i] = F[0][i];
     }
   } else {
+    std::vector<double> labels = data->data_header.idx2label;
+    std::sort(labels.begin(),labels.end());
     for (size_t i = 0; i < data->n_data; ++i) {
       std::vector<double> prob(data->data_header.n_classes);
       for (int j = 0; j < data->data_header.n_classes; ++j) prob[j] = F[j][i];
       softmax(prob);
       for (int j = 0; j < data->data_header.n_classes; ++j) {
-        int internal_idx = data->data_header.label2idx[j];
+        int internal_idx = data->data_header.label2idx[labels[j]];
         ret[j * data->n_data + i] = prob[internal_idx];
       }
     }
@@ -161,6 +163,8 @@ void GradientBoosting::savePrediction() {
     if (config->save_prob){
       fprob = fopen(probability_file.c_str(), "w");
     }
+    std::vector<double> labels = data->data_header.idx2label;
+    std::sort(labels.begin(),labels.end());
     for (size_t i = 0; i < data->n_data; ++i) {
       std::vector<double> prob(data->data_header.n_classes);
       double maxn = F[0][i];
@@ -177,7 +181,7 @@ void GradientBoosting::savePrediction() {
       if(fprob != NULL){
         softmax(prob);
         for (int j = 0; j < data->data_header.n_classes; ++j) {
-          int internal_idx = data->data_header.label2idx[j];
+          int internal_idx = data->data_header.label2idx[labels[j]];
           fprintf(fprob, "%.5f ", prob[internal_idx]);
         }
         fprintf(fprob, "\n");
@@ -840,6 +844,8 @@ void BinaryMart::savePrediction() {
   if (config->save_prob){
     fprob = fopen(probability_file.c_str(), "w");
   }
+  std::vector<double> labels = data->data_header.idx2label;
+  std::sort(labels.begin(),labels.end());
   for (size_t i = 0; i < data->n_data; ++i) {
     std::vector<double> prob(2);
     prob[0] = F[i];
@@ -850,7 +856,7 @@ void BinaryMart::savePrediction() {
     if(fprob != NULL){
       softmax(prob);
       for (int j = 0; j < data->data_header.n_classes; ++j) {
-        int internal_idx = data->data_header.label2idx[j];
+        int internal_idx = data->data_header.label2idx[labels[j]];
         fprintf(fprob, "%.5f ", prob[internal_idx]);
       }
       fprintf(fprob, "\n");
@@ -862,6 +868,8 @@ void BinaryMart::savePrediction() {
 }
 
 void BinaryMart::returnPrediction(double* ret) {
+  std::vector<double> labels = data->data_header.idx2label;
+  std::sort(labels.begin(),labels.end());
   for (size_t i = 0; i < data->n_data; ++i) {
     std::vector<double> prob(2);
     prob[0] = F[i];
@@ -870,7 +878,7 @@ void BinaryMart::returnPrediction(double* ret) {
     int pred = round(data->data_header.idx2label[maxj]);
     softmax(prob);
     for (int j = 0; j < data->data_header.n_classes; ++j) {
-      int internal_idx = data->data_header.label2idx[j];
+      int internal_idx = data->data_header.label2idx[labels[j]];
       ret[j * data->n_data + i] = prob[internal_idx];
     }
   }
