@@ -77,6 +77,7 @@ class GradientBoosting {
   virtual ~GradientBoosting();
 
   int start_epoch = 0;
+  std::vector<std::vector<double>> testlog;
 
   int argmax(std::vector<double>& f_vector);
   virtual double getAccuracy();
@@ -100,7 +101,7 @@ class GradientBoosting {
 
   virtual void savePrediction();
 
-  virtual void returnPrediction(double* ret);
+  virtual void returnPrediction(double* prediction,double* probability);
 
   Config* getConfig() { return config; }
   Data* getData() { return data; }
@@ -152,7 +153,7 @@ class BinaryMart : public GradientBoosting {
 	double getLoss();
   double getAUC();
   void savePrediction();
-  void returnPrediction(double* ret);
+  void returnPrediction(double* prediction,double* probability);
   
 	std::vector<double> F;//, hessians, residuals;
 

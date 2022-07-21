@@ -154,7 +154,7 @@ void* train(py::array_t<double> Y, py::object general_X, std::string model_name,
   return model;
 }
 
-py::array_t<double> test(py::array_t<double> Y, py::object general_X, void* py_model) {
+py::dict test(py::array_t<double> Y, py::object general_X, void* py_model, py::kwargs params = py::none()) {
   std::string class_name = py::str(general_X.get_type());
   py::array_t<double> X;
   std::vector<std::vector<std::pair<int,double>>> kvs;
@@ -175,7 +175,7 @@ py::array_t<double> test(py::array_t<double> Y, py::object general_X, void* py_m
     int dim = py::array_t<double>(general_X).ndim();
     if(dim != 2){
       py::print("X should be 2-dimensional. Found",dim);
-      return py::array_t<double>();
+      return py::dict();
     }
     n_row = py::array_t<double>(general_X).shape(0);
     n_col = py::array_t<double>(general_X).shape(1);
@@ -201,12 +201,24 @@ py::array_t<double> test(py::array_t<double> Y, py::object general_X, void* py_m
     n_col = sh.attr("__getitem__")(1).cast<int>();
   }else{
     py::print("Unrecognized matrix X:", py::str(general_X.get_type()));
-    return py::array_t<double>();
+    return py::dict();
   }
 
   ABCBoost::GradientBoosting* model =
       reinterpret_cast<ABCBoost::GradientBoosting*>(py_model);
   ABCBoost::Config* config = model->getConfig();
+  if (params != py::none()){
+    for(auto it : params){
+      const std::string& name = py::cast<const std::string>(it.first);
+      std::string val = py::cast<const std::string>(py::str(it.second));
+      try{
+        config->parse(name,val);
+      }catch (...){
+        py::print("The program stopped due to the above error(s).");
+        return py::dict();
+      }
+    }
+  }
   config->model_mode = "test";
 
   py::array_t<double> Ycopy = Y.attr("copy")();
@@ -226,23 +238,54 @@ py::array_t<double> test(py::array_t<double> Y, py::object general_X, void* py_m
   model->getData()->loadData(true);
   model->init();
   model->setupExperiment();
+  
 
+  model->testlog.clear();
   model->test();
   int n_classes = model->getData()->data_header.n_classes;
-  std::vector<double> ans(n_row * n_classes);
-  model->returnPrediction(ans.data());
-  py::array_t<double> ret = py::array_t<double>(n_row * n_classes);
-  double* buff = (double*)ret.request().ptr;
-  for (int j = 0; j < n_classes; ++j){
-    for (int i = 0; i < n_row; ++i){
-      buff[i * n_classes + j] = ans[j * n_row + i];
+	std::vector<double> prob(1);
+  std::vector<double> prediction(n_row);
+  if(config->save_prob){
+    prob.resize(n_row * n_classes);
+  }
+  model->returnPrediction(prediction.data(),prob.data());
+
+  py::dict ret;
+  py::array_t<double> py_pred = py::array_t<double>(n_row);
+  double* buff = (double*)py_pred.request().ptr;
+  for (int i = 0; i < n_row; ++i){
+    buff[i] = prediction[i];
+  }
+  ret["prediction"] = py_pred;
+  
+  int testlog_col = model->testlog.size() > 0 ? model->testlog[0].size() : 0;
+  int testlog_row = model->testlog.size();
+  py::array_t<double> py_testlog = py::array_t<double>(testlog_row * testlog_col);
+  buff = (double*)py_testlog.request().ptr;
+  for(int i = 0;i < testlog_row;++i){
+    for(int j = 0;j < model->testlog[i].size();++j){
+      buff[i * testlog_col + j] = model->testlog[i][j];
     }
   }
-  ret.resize({n_row,n_classes});
+  py_testlog.resize({testlog_row,testlog_col});
+  ret["testlog"] = py_testlog;
+
+  if(config->save_prob){
+    py::array_t<double> py_prob = py::array_t<double>(n_row * n_classes);
+    double* buff = (double*)py_prob.request().ptr;
+    for (int j = 0; j < n_classes; ++j){
+      for (int i = 0; i < n_row; ++i){
+        buff[i * n_classes + j] = prob[j * n_row + i];
+      }
+    }
+    py_prob.resize({n_row,n_classes});
+    ret["probability"] = py_prob;
+  }
+  model->testlog.clear();
   return ret;
 }
 
-py::array_t<double> predict(py::object general_X, void* py_model) {
+py::dict predict(py::object general_X, void* py_model, py::kwargs params = py::none()) {
   std::string class_name = py::str(general_X.get_type());
   py::array_t<double> X;
   std::vector<std::vector<std::pair<int,double>>> kvs;
@@ -263,7 +306,7 @@ py::array_t<double> predict(py::object general_X, void* py_model) {
     int dim = py::array_t<double>(general_X).ndim();
     if(dim != 2){
       py::print("X should be 2-dimensional. Found",dim);
-      return py::array_t<double>();
+      return py::dict();
     }
     n_row = py::array_t<double>(general_X).shape(0);
     n_col = py::array_t<double>(general_X).shape(1);
@@ -289,12 +332,26 @@ py::array_t<double> predict(py::object general_X, void* py_model) {
     n_col = sh.attr("__getitem__")(1).cast<int>();
   }else{
     py::print("Unrecognized matrix X:", py::str(general_X.get_type()));
-    return py::array_t<double>();
+    return py::dict();
   }
 
   ABCBoost::GradientBoosting* model =
       reinterpret_cast<ABCBoost::GradientBoosting*>(py_model);
   ABCBoost::Config* config = model->getConfig();
+
+  if (params != py::none()){
+    for(auto it : params){
+      const std::string& name = py::cast<const std::string>(it.first);
+      std::string val = py::cast<const std::string>(py::str(it.second));
+      try{
+        config->parse(name,val);
+      }catch (...){
+        py::print("The program stopped due to the above error(s).");
+        return py::dict();
+      }
+    }
+  }
+
   config->model_mode = "test";
 
   config->mem_Y_matrix = NULL;
@@ -319,16 +376,33 @@ py::array_t<double> predict(py::object general_X, void* py_model) {
 
   model->test();
   int n_classes = model->getData()->data_header.n_classes;
-  std::vector<double> ans(n_row * n_classes);
-  model->returnPrediction(ans.data());
-  py::array_t<double> ret = py::array_t<double>(n_row * n_classes);
-  double* buff = (double*)ret.request().ptr;
-  for (int j = 0; j < n_classes; ++j){
-    for (int i = 0; i < n_row; ++i){
-      buff[i * n_classes + j] = ans[j * n_row + i];
-    }
+	std::vector<double> prob(1);
+  std::vector<double> prediction(n_row);
+  if(config->save_prob){
+    prob.resize(n_row * n_classes);
   }
-  ret.resize({n_row,n_classes});
+  model->returnPrediction(prediction.data(),prob.data());
+
+  py::dict ret;
+  py::array_t<double> py_pred = py::array_t<double>(n_row);
+  double* buff = (double*)py_pred.request().ptr;
+  for (int i = 0; i < n_row; ++i){
+    buff[i] = prediction[i];
+  }
+  ret["prediction"] = py_pred;
+
+  if(config->save_prob){
+    py::array_t<double> py_prob = py::array_t<double>(n_row * n_classes);
+    double* buff = (double*)py_prob.request().ptr;
+    for (int j = 0; j < n_classes; ++j){
+      for (int i = 0; i < n_row; ++i){
+        buff[i * n_classes + j] = prob[j * n_row + i];
+      }
+    }
+    py_prob.resize({n_row,n_classes});
+    ret["probability"] = py_prob;
+  }
+
   config->no_label = prev_no_label;
   return ret;
 }

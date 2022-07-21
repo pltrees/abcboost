@@ -108,6 +108,13 @@ void GradientBoosting::print_test_message(int iter,double iter_time,int& low_err
       fprintf(log_out,"%4d %20.14e %7d %.5f\n", iter, loss, err, iter_time);
     }
   }
+  if(config->from_wrapper){
+    if(config->test_auc){
+      testlog.push_back(std::vector<double>({iter * 1.0,loss,err * 1.0,auc,iter_time}));
+    }else{
+      testlog.push_back(std::vector<double>({iter * 1.0,loss,err * 1.0,iter_time}));
+    }
+  }
 }
 
 void GradientBoosting::print_train_message(int iter,double loss,double iter_time){
@@ -145,21 +152,33 @@ void GradientBoosting::saveF() {
   fclose(fp);
 }
 
-void GradientBoosting::returnPrediction(double *ret) {
+void GradientBoosting::returnPrediction(double *prediction, double* probability) {
   if (config->model_name == "lambdarank" || config->model_name == "lambdamart" || config->model_name == "gbrank" || config->model_name == "regression") {
     for (size_t i = 0; i < data->n_data; ++i) {
-      ret[i] = F[0][i];
+      prediction[i] = F[0][i];
     }
   } else {
+    const bool save_prob = config->save_prob;
     std::vector<double> labels = data->data_header.idx2label;
     std::sort(labels.begin(),labels.end());
     for (size_t i = 0; i < data->n_data; ++i) {
       std::vector<double> prob(data->data_header.n_classes);
-      for (int j = 0; j < data->data_header.n_classes; ++j) prob[j] = F[j][i];
-      softmax(prob);
-      for (int j = 0; j < data->data_header.n_classes; ++j) {
-        int internal_idx = data->data_header.label2idx[labels[j]];
-        ret[j * data->n_data + i] = prob[internal_idx];
+      double maxn = F[0][i];
+      int maxj = 0;
+      for (int j = 0; j < data->data_header.n_classes; ++j){
+        prob[j] = F[j][i];
+        if(maxn < prob[j]){
+          maxn = prob[j];
+          maxj = j;
+        }
+      }
+      prediction[i] = round(data->data_header.idx2label[maxj]);
+      if(save_prob){
+        softmax(prob);
+        for (int j = 0; j < data->data_header.n_classes; ++j) {
+          int internal_idx = data->data_header.label2idx[labels[j]];
+          probability[j * data->n_data + i] = prob[internal_idx];
+        }
       }
     }
   }
@@ -705,6 +724,13 @@ void Regression::print_test_message(int iter,double iter_time,double& low_loss){
       fprintf(log_out,"%4d %20.14e %.5f\n", iter, loss, iter_time);
     }
   }
+  if(config->from_wrapper){
+    if(loss_name != "l2_loss"){
+      testlog.push_back(std::vector<double>({iter * 1.0,l2_loss,loss,iter_time}));
+    }else{
+      testlog.push_back(std::vector<double>({iter * 1.0,loss,iter_time}));
+    }
+  }
 }
 
 /**
@@ -933,19 +959,23 @@ void BinaryMart::savePrediction() {
     fclose(fprob);
 }
 
-void BinaryMart::returnPrediction(double* ret) {
+void BinaryMart::returnPrediction(double* prediction,double* probability) {
   std::vector<double> labels = data->data_header.idx2label;
   std::sort(labels.begin(),labels.end());
+  const bool save_prob = config->save_prob;
   for (size_t i = 0; i < data->n_data; ++i) {
     std::vector<double> prob(2);
     prob[0] = F[i];
     prob[1] = -F[i];
     int maxj = prob[0] >= prob[1] ? 0 : 1;
-    int pred = round(data->data_header.idx2label[maxj]);
-    softmax(prob);
-    for (int j = 0; j < data->data_header.n_classes; ++j) {
-      int internal_idx = data->data_header.label2idx[labels[j]];
-      ret[j * data->n_data + i] = prob[internal_idx];
+    prediction[i] = round(data->data_header.idx2label[maxj]);
+
+    if(save_prob){
+      softmax(prob);
+      for (int j = 0; j < data->data_header.n_classes; ++j) {
+        int internal_idx = data->data_header.label2idx[labels[j]];
+        probability[j * data->n_data + i] = prob[internal_idx];
+      }
     }
   }
 }

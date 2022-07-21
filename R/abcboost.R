@@ -36,7 +36,7 @@ abcboost_train <- function(train_Y,train_X,model_name,iter,leaves,shinkage,searc
 	return(model)
 }
 
-abcboost_test <- function(test_Y,test_X,model){
+abcboost_test <- function(test_Y,test_X,model,params=NULL){
   test_Y = as.numeric(test_Y)
   if(is(test_X,'sparseMatrix') == FALSE){
     test_X = as.matrix(test_X)
@@ -55,14 +55,14 @@ abcboost_test <- function(test_Y,test_X,model){
     test_X <- t(as(test_X,'dgCMatrix'))
     leni = length(test_X@i)
     lenp = length(test_X@p)
-	  ret <- .Call("test_sparse",as.double(test_Y),as.integer(test_X@i),as.integer(leni),as.integer(test_X@p),as.integer(lenp),as.double(test_X@x),as.integer(n_row_x),as.integer(n_col_x),model)
+	  ret <- .Call("test_sparse",as.double(test_Y),as.integer(test_X@i),as.integer(leni),as.integer(test_X@p),as.integer(lenp),as.double(test_X@x),as.integer(n_row_x),as.integer(n_col_x),model,as.list(params))
   }else{
-	  ret <- .Call("test",as.double(test_Y),as.double(test_X),as.integer(n_row_x),as.integer(n_col_x),model)
+	  ret <- .Call("test",as.double(test_Y),as.double(test_X),as.integer(n_row_x),as.integer(n_col_x),model,as.list(params))
   }
 	return(ret)
 }
 
-abcboost_predict <- function(test_X,model){
+abcboost_predict <- function(test_X,model,params=NULL){
   if(is(test_X,'sparseMatrix') == FALSE){
     test_X = as.matrix(test_X)
     if(is.matrix(test_X) == FALSE){
@@ -75,9 +75,9 @@ abcboost_predict <- function(test_X,model){
     test_X <- t(as(test_X,'dgCMatrix'))
     leni = length(test_X@i)
     lenp = length(test_X@p)
-	  ret <- .Call("predict_sparse",as.integer(test_X@i),as.integer(leni),as.integer(test_X@p),as.integer(lenp),as.double(test_X@x),as.integer(n_row_x),as.integer(n_col_x),model)
+	  ret <- .Call("predict_sparse",as.integer(test_X@i),as.integer(leni),as.integer(test_X@p),as.integer(lenp),as.double(test_X@x),as.integer(n_row_x),as.integer(n_col_x),model,as.list(params))
   }else{
-	  ret <- .Call("predict",as.double(test_X),as.integer(n_row_x),as.integer(n_col_x),model)
+	  ret <- .Call("predict",as.double(test_X),as.integer(n_row_x),as.integer(n_col_x),model,as.list(params))
   }
 	return(ret)
 }

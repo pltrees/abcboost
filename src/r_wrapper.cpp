@@ -239,7 +239,7 @@ SEXP train_sparse(SEXP Y, SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x
   return ret;
 }
 
-SEXP test(SEXP Y, SEXP X, SEXP row, SEXP col, SEXP r_model) {
+SEXP test(SEXP Y, SEXP X, SEXP row, SEXP col, SEXP r_model, SEXP params = NILSXP) {
   SEXP x = PROTECT(coerceVector(X, REALSXP));
   SEXP y = PROTECT(coerceVector(Y, REALSXP));
   int n_row = *INTEGER(row);
@@ -248,6 +248,31 @@ SEXP test(SEXP Y, SEXP X, SEXP row, SEXP col, SEXP r_model) {
   ABCBoost::GradientBoosting* model =
       reinterpret_cast<ABCBoost::GradientBoosting*>(R_ExternalPtrAddr(r_model));
   ABCBoost::Config* config = model->getConfig();
+  if (params != NILSXP){
+    int nfields = length(params);
+    SEXP names = getAttrib(params,R_NamesSymbol);
+    for(int i = 0;i < nfields;++i){
+      std::string name = std::string(CHAR(STRING_ELT(names,i)));
+      SEXP field = VECTOR_ELT(params,i);
+      std::string val;
+      if(TYPEOF(field) == INTSXP){
+        val = std::to_string(*INTEGER(field));
+      }else if(TYPEOF(field) == REALSXP){
+        val = std::to_string(*REAL(field));
+      }else if(TYPEOF(field) == STRSXP){
+        val = std::string(CHAR(STRING_ELT(field, 0)));
+      }else{
+        printf("[Error] The param has to be either scalar or string");
+        return R_NilValue;
+      }
+      try{
+        config->parse(name,val);
+      }catch (...){
+        error("The program stopped due to the above error(s).");
+        return R_NilValue;
+      }
+    }
+  }
   config->model_mode = "test";
 
   config->mem_Y_matrix = REAL(y);
@@ -263,15 +288,53 @@ SEXP test(SEXP Y, SEXP X, SEXP row, SEXP col, SEXP r_model) {
 
   model->test();
   int n_classes = model->getData()->data_header.n_classes;
-  std::vector<double> ans(n_row * n_classes);
-  model->returnPrediction(ans.data());
-  SEXP ret = PROTECT(allocMatrix(REALSXP, n_row, n_classes));
-  for (int i = 0; i < n_row * n_classes; ++i) REAL(ret)[i] = ans[i];
-  UNPROTECT(3);
+	std::vector<double> prob(1);
+  std::vector<double> prediction(n_row);
+  if(config->save_prob){
+    prob.resize(n_row * n_classes);
+  }
+  model->returnPrediction(prediction.data(),prob.data());
+  SEXP r_pred = PROTECT(allocMatrix(REALSXP, n_row, 1));
+  for (int i = 0; i < n_row; ++i)
+    REAL(r_pred)[i] = prediction[i];
+  
+  int testlog_col = model->testlog.size() > 0 ? model->testlog[0].size() : 0;
+  int testlog_row = model->testlog.size();
+  SEXP r_testlog = PROTECT(allocMatrix(REALSXP, testlog_row, testlog_col));
+  for(int i = 0;i < testlog_row;++i){
+    for(int j = 0;j < model->testlog[i].size();++j){
+      REAL(r_testlog)[j * testlog_row + i] = model->testlog[i][j];
+    }
+  }
+
+  SEXP r_prob;
+  if(config->save_prob){
+    r_prob = PROTECT(allocMatrix(REALSXP, n_row, n_classes));
+    for (int i = 0; i < n_row * n_classes; ++i)
+      REAL(r_prob)[i] = prob[i];
+  }else{
+    r_prob = PROTECT(allocMatrix(REALSXP, 1, 1));
+  }
+  
+  SEXP ret;
+  if(config->save_prob){
+    const char *names[] = {"prediction", "testlog", "probability", ""};
+    ret = PROTECT(mkNamed(VECSXP, names));
+    SET_VECTOR_ELT(ret, 0, r_pred);
+    SET_VECTOR_ELT(ret, 1, r_testlog);
+    SET_VECTOR_ELT(ret, 2, r_prob);
+  }else{
+    const char *names[] = {"prediction", "testlog", ""};
+    ret = PROTECT(mkNamed(VECSXP, names));
+    SET_VECTOR_ELT(ret, 0, r_pred);
+    SET_VECTOR_ELT(ret, 1, r_testlog);
+  }
+
+  UNPROTECT(6);
   return ret;
 }
 
-SEXP predict(SEXP X, SEXP row, SEXP col, SEXP r_model) {
+SEXP predict(SEXP X, SEXP row, SEXP col, SEXP r_model, SEXP params = NILSXP) {
   SEXP x = PROTECT(coerceVector(X, REALSXP));
   int n_row = *INTEGER(row);
   int n_col = *INTEGER(col);
@@ -279,6 +342,31 @@ SEXP predict(SEXP X, SEXP row, SEXP col, SEXP r_model) {
   ABCBoost::GradientBoosting* model =
       reinterpret_cast<ABCBoost::GradientBoosting*>(R_ExternalPtrAddr(r_model));
   ABCBoost::Config* config = model->getConfig();
+  if (params != NILSXP){
+    int nfields = length(params);
+    SEXP names = getAttrib(params,R_NamesSymbol);
+    for(int i = 0;i < nfields;++i){
+      std::string name = std::string(CHAR(STRING_ELT(names,i)));
+      SEXP field = VECTOR_ELT(params,i);
+      std::string val;
+      if(TYPEOF(field) == INTSXP){
+        val = std::to_string(*INTEGER(field));
+      }else if(TYPEOF(field) == REALSXP){
+        val = std::to_string(*REAL(field));
+      }else if(TYPEOF(field) == STRSXP){
+        val = std::string(CHAR(STRING_ELT(field, 0)));
+      }else{
+        printf("[Error] The param has to be either scalar or string");
+        return R_NilValue;
+      }
+      try{
+        config->parse(name,val);
+      }catch (...){
+        error("The program stopped due to the above error(s).");
+        return R_NilValue;
+      }
+    }
+  }
   config->model_mode = "test";
 
   config->mem_Y_matrix = NULL;
@@ -297,16 +385,43 @@ SEXP predict(SEXP X, SEXP row, SEXP col, SEXP r_model) {
 
   model->test();
   int n_classes = model->getData()->data_header.n_classes;
-  std::vector<double> ans(n_row * n_classes);
-  model->returnPrediction(ans.data());
-  SEXP ret = PROTECT(allocMatrix(REALSXP, n_row, n_classes));
-  for (int i = 0; i < n_row * n_classes; ++i) REAL(ret)[i] = ans[i];
-  UNPROTECT(2);
+	std::vector<double> prob(1);
+  std::vector<double> prediction(n_row);
+  if(config->save_prob){
+    prob.resize(n_row * n_classes);
+  }
+  model->returnPrediction(prediction.data(),prob.data());
+  SEXP r_pred = PROTECT(allocMatrix(REALSXP, n_row, 1));
+  for (int i = 0; i < n_row; ++i)
+    REAL(r_pred)[i] = prediction[i];
+  
+  SEXP r_prob;
+  if(config->save_prob){
+    r_prob = PROTECT(allocMatrix(REALSXP, n_row, n_classes));
+    for (int i = 0; i < n_row * n_classes; ++i)
+      REAL(r_prob)[i] = prob[i];
+  }else{
+    r_prob = PROTECT(allocMatrix(REALSXP, 1, 1));
+  }
+  
+  SEXP ret;
+  if(config->save_prob){
+    const char *names[] = {"prediction", "probability", ""};
+    ret = PROTECT(mkNamed(VECSXP, names));
+    SET_VECTOR_ELT(ret, 0, r_pred);
+    SET_VECTOR_ELT(ret, 1, r_prob);
+  }else{
+    const char *names[] = {"prediction", ""};
+    ret = PROTECT(mkNamed(VECSXP, names));
+    SET_VECTOR_ELT(ret, 0, r_pred);
+  }
+
+  UNPROTECT(4);
   config->no_label = prev_no_label;
   return ret;
 }
 
-SEXP test_sparse(SEXP Y,SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x, SEXP row, SEXP col, SEXP r_model) {
+SEXP test_sparse(SEXP Y,SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x, SEXP row, SEXP col, SEXP r_model, SEXP params = NILSXP) {
   SEXP xi = PROTECT(coerceVector(X_i,INTSXP));
   SEXP xp = PROTECT(coerceVector(X_p,INTSXP));
   SEXP xx = PROTECT(coerceVector(X_x,REALSXP));
@@ -330,7 +445,31 @@ SEXP test_sparse(SEXP Y,SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x, 
 
   ABCBoost::GradientBoosting* model =
       reinterpret_cast<ABCBoost::GradientBoosting*>(R_ExternalPtrAddr(r_model));
-  ABCBoost::Config* config = model->getConfig();
+  ABCBoost::Config* config = model->getConfig();  if (params != NILSXP){
+    int nfields = length(params);
+    SEXP names = getAttrib(params,R_NamesSymbol);
+    for(int i = 0;i < nfields;++i){
+      std::string name = std::string(CHAR(STRING_ELT(names,i)));
+      SEXP field = VECTOR_ELT(params,i);
+      std::string val;
+      if(TYPEOF(field) == INTSXP){
+        val = std::to_string(*INTEGER(field));
+      }else if(TYPEOF(field) == REALSXP){
+        val = std::to_string(*REAL(field));
+      }else if(TYPEOF(field) == STRSXP){
+        val = std::string(CHAR(STRING_ELT(field, 0)));
+      }else{
+        printf("[Error] The param has to be either scalar or string");
+        return R_NilValue;
+      }
+      try{
+        config->parse(name,val);
+      }catch (...){
+        error("The program stopped due to the above error(s).");
+        return R_NilValue;
+      }
+    }
+  }
   config->model_mode = "test";
 
   config->mem_is_sparse = true;
@@ -347,15 +486,53 @@ SEXP test_sparse(SEXP Y,SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x, 
 
   model->test();
   int n_classes = model->getData()->data_header.n_classes;
-  std::vector<double> ans(n_row * n_classes);
-  model->returnPrediction(ans.data());
-  SEXP ret = PROTECT(allocMatrix(REALSXP, n_row, n_classes));
-  for (int i = 0; i < n_row * n_classes; ++i) REAL(ret)[i] = ans[i];
-  UNPROTECT(5);
+	std::vector<double> prob(1);
+  std::vector<double> prediction(n_row);
+  if(config->save_prob){
+    prob.resize(n_row * n_classes);
+  }
+  model->returnPrediction(prediction.data(),prob.data());
+  SEXP r_pred = PROTECT(allocMatrix(REALSXP, n_row, 1));
+  for (int i = 0; i < n_row; ++i)
+    REAL(r_pred)[i] = prediction[i];
+  
+  int testlog_col = model->testlog.size() > 0 ? model->testlog[0].size() : 0;
+  int testlog_row = model->testlog.size();
+  SEXP r_testlog = PROTECT(allocMatrix(REALSXP, testlog_row, testlog_col));
+  for(int i = 0;i < testlog_row;++i){
+    for(int j = 0;j < model->testlog[i].size();++j){
+      REAL(r_testlog)[j * testlog_row + i] = model->testlog[i][j];
+    }
+  }
+
+  SEXP r_prob;
+  if(config->save_prob){
+    r_prob = PROTECT(allocMatrix(REALSXP, n_row, n_classes));
+    for (int i = 0; i < n_row * n_classes; ++i)
+      REAL(r_prob)[i] = prob[i];
+  }else{
+    r_prob = PROTECT(allocMatrix(REALSXP, 1, 1));
+  }
+  
+  SEXP ret;
+  if(config->save_prob){
+    const char *names[] = {"prediction", "testlog", "probability", ""};
+    ret = PROTECT(mkNamed(VECSXP, names));
+    SET_VECTOR_ELT(ret, 0, r_pred);
+    SET_VECTOR_ELT(ret, 1, r_testlog);
+    SET_VECTOR_ELT(ret, 2, r_prob);
+  }else{
+    const char *names[] = {"prediction", "testlog", ""};
+    ret = PROTECT(mkNamed(VECSXP, names));
+    SET_VECTOR_ELT(ret, 0, r_pred);
+    SET_VECTOR_ELT(ret, 1, r_testlog);
+  }
+
+  UNPROTECT(8);
   return ret;
 }
 
-SEXP predict_sparse(SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x, SEXP row, SEXP col, SEXP r_model) {
+SEXP predict_sparse(SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x, SEXP row, SEXP col, SEXP r_model, SEXP params = NILSXP) {
   SEXP xi = PROTECT(coerceVector(X_i,INTSXP));
   SEXP xp = PROTECT(coerceVector(X_p,INTSXP));
   SEXP xx = PROTECT(coerceVector(X_x,REALSXP));
@@ -379,6 +556,31 @@ SEXP predict_sparse(SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x, SEXP
   ABCBoost::GradientBoosting* model =
       reinterpret_cast<ABCBoost::GradientBoosting*>(R_ExternalPtrAddr(r_model));
   ABCBoost::Config* config = model->getConfig();
+  if (params != NILSXP){
+    int nfields = length(params);
+    SEXP names = getAttrib(params,R_NamesSymbol);
+    for(int i = 0;i < nfields;++i){
+      std::string name = std::string(CHAR(STRING_ELT(names,i)));
+      SEXP field = VECTOR_ELT(params,i);
+      std::string val;
+      if(TYPEOF(field) == INTSXP){
+        val = std::to_string(*INTEGER(field));
+      }else if(TYPEOF(field) == REALSXP){
+        val = std::to_string(*REAL(field));
+      }else if(TYPEOF(field) == STRSXP){
+        val = std::string(CHAR(STRING_ELT(field, 0)));
+      }else{
+        printf("[Error] The param has to be either scalar or string");
+        return R_NilValue;
+      }
+      try{
+        config->parse(name,val);
+      }catch (...){
+        error("The program stopped due to the above error(s).");
+        return R_NilValue;
+      }
+    }
+  }
   config->model_mode = "test";
 
   config->mem_is_sparse = true;
@@ -398,11 +600,39 @@ SEXP predict_sparse(SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x, SEXP
 
   model->test();
   int n_classes = model->getData()->data_header.n_classes;
-  std::vector<double> ans(n_row * n_classes);
-  model->returnPrediction(ans.data());
-  SEXP ret = PROTECT(allocMatrix(REALSXP, n_row, n_classes));
-  for (int i = 0; i < n_row * n_classes; ++i) REAL(ret)[i] = ans[i];
-  UNPROTECT(4);
+	std::vector<double> prob(1);
+  std::vector<double> prediction(n_row);
+  if(config->save_prob){
+    prob.resize(n_row * n_classes);
+  }
+  model->returnPrediction(prediction.data(),prob.data());
+  SEXP r_pred = PROTECT(allocMatrix(REALSXP, n_row, 1));
+  for (int i = 0; i < n_row; ++i)
+    REAL(r_pred)[i] = prediction[i];
+  
+  SEXP r_prob;
+  if(config->save_prob){
+    r_prob = PROTECT(allocMatrix(REALSXP, n_row, n_classes));
+    for (int i = 0; i < n_row * n_classes; ++i)
+      REAL(r_prob)[i] = prob[i];
+  }else{
+    r_prob = PROTECT(allocMatrix(REALSXP, 1, 1));
+  }
+  
+  SEXP ret;
+  if(config->save_prob){
+    const char *names[] = {"prediction", "probability", ""};
+    ret = PROTECT(mkNamed(VECSXP, names));
+    SET_VECTOR_ELT(ret, 0, r_pred);
+    SET_VECTOR_ELT(ret, 1, r_prob);
+  }else{
+    const char *names[] = {"prediction", ""};
+    ret = PROTECT(mkNamed(VECSXP, names));
+    SET_VECTOR_ELT(ret, 0, r_pred);
+  }
+
+  UNPROTECT(6);
+  config->no_label = prev_no_label;
   return ret;
 }
 
@@ -539,10 +769,10 @@ SEXP read_libsvm(SEXP r_path) {
     REAL(r_y)[i] = y[i];
 
   const char *names[] = {"is", "ps", "xs", "y", ""};                   /* note the null string */
-  SEXP res = PROTECT(mkNamed(VECSXP, names));  /* list of length 3 */
-  SET_VECTOR_ELT(res, 0, r_is);       /* numeric(1) */
-  SET_VECTOR_ELT(res, 1, r_ps);   /* numeric(<some length>) */
-  SET_VECTOR_ELT(res, 2, r_xs);    /* integer(1) */
+  SEXP res = PROTECT(mkNamed(VECSXP, names));  /* list of length 4 */
+  SET_VECTOR_ELT(res, 0, r_is);
+  SET_VECTOR_ELT(res, 1, r_ps);
+  SET_VECTOR_ELT(res, 2, r_xs);
   SET_VECTOR_ELT(res, 3, r_y);
   UNPROTECT(5);
   return res;
