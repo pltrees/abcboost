@@ -212,7 +212,7 @@ R CMD build abcboost
 
 For users' convience, we also provide, under `R/`,  the pre-built `abcboost_1.0.0.tar.gz` and `abcboost_1.0.0_mult.tar.gz`, for single-thread version and multi-thread version, respectively. To install the (single-thread) package, in R console, type 
 ```
-install.packages('R/abcboost_1.0.0.tar.gz')
+install.packages('R/abcboost_1.0.0.tar.gz', repos = NULL, type = 'source')
 ```
 One can use `setwd` to change the current working directory. Note that we should first remove the package (`remove.packages('abcboost')`) if we hope to replace the single-thread version with the multi-thread version. 
 
