@@ -519,6 +519,9 @@ void GradientBoosting::setupExperiment() {
     sstream << "_w" << config->warmup_iter;
   }
   if(config->model_name == "regression"){
+    if(config->regression_huber_loss){
+      sstream << "_huber";
+    }
     sstream << "_p" << config->regression_lp_loss;
   }
 
@@ -694,26 +697,28 @@ void Regression::print_test_message(int iter,double iter_time,double& low_loss){
   double loss = config->regression_huber_loss ? getHuberLoss() : getLpLoss();
   std::string loss_name = "";
   if(config->regression_huber_loss){
-    loss_name = "huber_loss";
+    std::ostringstream sstream;
+    sstream << "Huber_L" << config->regression_lp_loss << "_loss";
+    loss_name = sstream.str();
   }else if(config->regression_lp_loss == 1.0){
-    loss_name = "l1_loss";
+    loss_name = "L1_loss";
   }else if(config->regression_lp_loss != 2.0){
     std::ostringstream sstream;
-    sstream << "l" << config->regression_lp_loss << "_loss";
+    sstream << "L" << config->regression_lp_loss << "_loss";
     loss_name = sstream.str();
   }else{
-    loss_name = "l2_loss";
+    loss_name = "L2_loss";
   }
 
   if(low_loss > loss)
     low_loss = loss;
   double l2_loss = loss;
-  if(loss_name != "l2_loss"){
+  if(loss_name != "L2_loss"){
     l2_loss = getLSLoss();
-    printf("%4d | l2_loss: %20.14e | %s: %-20.14e | time: %.5f\n", iter,
+    printf("%4d | L2_loss: %20.14e | %s: %-20.14e | time: %.5f\n", iter,
        l2_loss, loss_name.c_str(), loss, iter_time);
   }else{
-    printf("%4d | l2_loss: %20.14e | time: %.5f\n", iter,
+    printf("%4d | L2_loss: %20.14e | time: %.5f\n", iter,
        loss, iter_time);
   }
     
@@ -721,14 +726,14 @@ void Regression::print_test_message(int iter,double iter_time,double& low_loss){
  R_FlushConsole();
 #endif
   if(config->save_log){
-    if(loss_name != "l2_loss"){
+    if(loss_name != "L2_loss"){
       fprintf(log_out,"%4d %20.14e %20.14e %.5f\n", iter, l2_loss, loss, iter_time);
     }else{
       fprintf(log_out,"%4d %20.14e %.5f\n", iter, loss, iter_time);
     }
   }
   if(config->from_wrapper){
-    if(loss_name != "l2_loss"){
+    if(loss_name != "L2_loss"){
       testlog.push_back(std::vector<double>({iter * 1.0,l2_loss,loss,iter_time}));
     }else{
       testlog.push_back(std::vector<double>({iter * 1.0,loss,iter_time}));
