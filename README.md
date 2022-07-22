@@ -242,9 +242,9 @@ testY <- data[,1]
 model <- abcboost_train(Y,X,"abcrobustlogit",100,20,0.1,2,5,list(n_threads=1))
 # abcboost_save_model(model,'mymodel.model')
 # model <- abcboost_load_model('mymodel.model')
-res <- abcboost_test(testY,testX,model)
+res <- abcboost_test(testY,testX,model,list(test_auc=1))
 # predict without label 
-res <- abcboost_predict(testX,model)
+res <- abcboost_predict(testX,model,list(test_auc=1))
 # We also provide a method to read libsvm format data into sparse array
 data <- abcboost_read_libsvm('data/covtype.train.libsvm')
 X <- data$X
