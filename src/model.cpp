@@ -693,14 +693,17 @@ void Regression::print_test_message(int iter,double iter_time,double& low_loss){
     return;
   double loss = config->regression_huber_loss ? getHuberLoss() : getLpLoss();
   std::string loss_name = "";
-  if(config->regression_huber_loss)
+  if(config->regression_huber_loss){
     loss_name = "huber_loss";
-  else if(config->regression_lp_loss == 1.0)
+  }else if(config->regression_lp_loss == 1.0){
     loss_name = "l1_loss";
-  else if(config->regression_lp_loss != 2.0)
-    loss_name = "l" + std::to_string(config->regression_lp_loss) + "_loss";
-  else
+  }else if(config->regression_lp_loss != 2.0){
+    std::ostringstream sstream;
+    sstream << "l" << config->regression_lp_loss << "_loss";
+    loss_name = sstream.str();
+  }else{
     loss_name = "l2_loss";
+  }
 
   if(low_loss > loss)
     low_loss = loss;
