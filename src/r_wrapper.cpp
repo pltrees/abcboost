@@ -25,7 +25,7 @@
 #include <Rinternals.h>
 
 extern "C" {
-SEXP train(SEXP Y, SEXP X, SEXP row, SEXP col, SEXP r_model_name, SEXP r_iter, SEXP r_leaves, SEXP r_shrinkage, SEXP r_search = NILSXP, SEXP r_gap = NILSXP, SEXP params = NILSXP) {
+SEXP train(SEXP Y, SEXP X, SEXP row, SEXP col, SEXP r_model_name, SEXP r_iter, SEXP r_leaves, SEXP r_shrinkage, SEXP params = NILSXP) {
   SEXP x = PROTECT(coerceVector(X, REALSXP));
   SEXP y = PROTECT(coerceVector(Y, REALSXP));
   int n_row = *INTEGER(row);
@@ -48,10 +48,6 @@ SEXP train(SEXP Y, SEXP X, SEXP row, SEXP col, SEXP r_model_name, SEXP r_iter, S
   config->save_model = false;
   config->save_log = false;
 
-  if(r_search != NILSXP)
-    config->base_candidates_size = *INTEGER(r_search);
-  if(r_gap != NILSXP)
-    config->model_gap = std::to_string(*INTEGER(r_gap));
   if (params != NILSXP){
     int nfields = length(params);
     SEXP names = getAttrib(params,R_NamesSymbol);
@@ -122,7 +118,7 @@ SEXP train(SEXP Y, SEXP X, SEXP row, SEXP col, SEXP r_model_name, SEXP r_iter, S
   return ret;
 }
 
-SEXP train_sparse(SEXP Y, SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x, SEXP row, SEXP col, SEXP r_model_name, SEXP r_iter, SEXP r_leaves, SEXP r_shrinkage, SEXP r_search = NILSXP, SEXP r_gap = NILSXP, SEXP params = NILSXP) {
+SEXP train_sparse(SEXP Y, SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x, SEXP row, SEXP col, SEXP r_model_name, SEXP r_iter, SEXP r_leaves, SEXP r_shrinkage, SEXP params = NILSXP) {
   SEXP xi = PROTECT(coerceVector(X_i,INTSXP));
   SEXP xp = PROTECT(coerceVector(X_p,INTSXP));
   SEXP xx = PROTECT(coerceVector(X_x,REALSXP));
@@ -164,10 +160,6 @@ SEXP train_sparse(SEXP Y, SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x
   config->save_model = false;
   config->save_log = false;
 
-  if(r_search != NILSXP)
-    config->base_candidates_size = *INTEGER(r_search);
-  if(r_gap != NILSXP)
-    config->model_gap = std::to_string(*INTEGER(r_gap));
   if (params != NILSXP){
     int nfields = length(params);
     SEXP names = getAttrib(params,R_NamesSymbol);

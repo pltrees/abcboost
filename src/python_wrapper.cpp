@@ -27,7 +27,7 @@
 namespace py = pybind11;
 
 extern "C"{
-void* train(py::array_t<double> Y, py::object general_X, std::string model_name, int iter, int leaves, double shrinkage, int search = 1, int gap = 0, py::kwargs params = py::none()) {
+void* train(py::array_t<double> Y, py::object general_X, std::string model_name, int iter, int leaves, double shrinkage, py::kwargs params = py::none()) {
   std::string class_name = py::str(general_X.get_type());
   py::array_t<double> X;
   std::vector<std::vector<std::pair<int,double>>> kvs;
@@ -91,8 +91,6 @@ void* train(py::array_t<double> Y, py::object general_X, std::string model_name,
   config->save_model = false;
   config->save_log = false;
 
-  config->base_candidates_size = search;
-  config->model_gap = std::to_string(gap);
   if (params != py::none()){
     for(auto it : params){
       const std::string& name = py::cast<const std::string>(it.first);
@@ -478,9 +476,8 @@ PYBIND11_MODULE(abcboost, m) {
           py::arg("model_name"),
           py::arg("iter"),
           py::arg("leaves"),
-          py::arg("shrinkage"),
-          py::arg("search") = 1,
-          py::arg("gap") = 0);
+          py::arg("shrinkage")
+          );
     m.def("test",&test, "test ABCBoost model",
           py::arg("Y"),
           py::arg("X"),

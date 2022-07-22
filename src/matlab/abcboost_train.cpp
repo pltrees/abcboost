@@ -40,21 +40,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs,
     config->tree_max_n_leaves = mxGetScalar(prhs[4]);
   if (nrhs > 5)
     config->model_shrinkage = mxGetScalar(prhs[5]);
-  if (nrhs > 6)
-    config->base_candidates_size = mxGetScalar(prhs[6]);
-  if (nrhs > 7)
-    config->model_gap = std::to_string(mxGetScalar(prhs[7]));
 
-  if (nrhs > 8){
-    int nfields = mxGetNumberOfFields(prhs[8]);
-    int nelems = mxGetNumberOfElements(prhs[8]);
+  if (nrhs > 6){
+    int nfields = mxGetNumberOfFields(prhs[6]);
+    int nelems = mxGetNumberOfElements(prhs[6]);
     if(nelems != 1){
       printf("[ERROR] The param structure parameter must have one element. The #elements we got is %d\n",nelems);
       return;
     }
     for(int i = 0;i < nfields;++i){
-      mxArray* field = mxGetFieldByNumber(prhs[8], 0, i);
-      std::string name = std::string(mxGetFieldNameByNumber(prhs[8],i));
+      mxArray* field = mxGetFieldByNumber(prhs[6], 0, i);
+      std::string name = std::string(mxGetFieldNameByNumber(prhs[6],i));
       std::string val;
       if(mxIsNumeric(field)){
         val = std::to_string(mxGetScalar(field));

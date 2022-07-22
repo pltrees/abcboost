@@ -220,7 +220,7 @@ One can use `setwd` to change the current working directory. Note that we should
 Function description (no need to copy to console):
 ```
 # No need to copy to console
-# abcboost_train: (train_Y,train_X,model_name,iter,leaves,shinkage,search=2,gap=5,params=NULL)
+# abcboost_train: (train_Y,train_X,model_name,iter,leaves,shinkage,params=NULL)
 # abcboost_test: (test_Y,test_X,model,params=NULL)
 # abcboost_predict: (test_X,model,params=NULL)
 # abcboost_save_model: function(model,path)
@@ -239,7 +239,7 @@ testY <- data[,1]
 # We use n_threads as an example
 # All command line supported parameters can be passed via list: 
 # list(parameter1=value1, parameter2=value2,...)
-model <- abcboost_train(Y,X,"abcrobustlogit",100,20,0.1,2,5,list(n_threads=1))
+model <- abcboost_train(Y,X,"abcrobustlogit",100,20,0.1,list(n_threads=1,search=2,gap=5))
 # abcboost_save_model(model,'mymodel.model')
 # model <- abcboost_load_model('mymodel.model')
 res <- abcboost_test(testY,testX,model,list(test_auc=1))
@@ -255,7 +255,7 @@ testY <- data$Y
 # X can be a either a dense matrix or a sparse matrix
 # The interface is the same as the dense case, 
 # but with better performance for sparse data
-model <- abcboost_train(Y,X,"abcrobustlogit",100,20,0.1,2,5,list(n_threads=1))
+model <- abcboost_train(Y,X,"abcrobustlogit",100,20,0.1,list(n_threads=1,search=2,gap=5))
 res <- abcboost_test(testY,testX,model)
 ```
 
@@ -291,10 +291,12 @@ testX = te(:,2:end);
 
 params = struct;
 params.n_threads = 1;
+params.search = 2;
+params.gap = 5;
 % The params argument is optional. 
 % We use n_threads as an example
 % All command line supported parameters can be passed via params: params.parameter_name = value
-model = abcboost_train(Y,X,'abcrobustlogit',100,20,0.1,1,0,params);
+model = abcboost_train(Y,X,'abcrobustlogit',100,20,0.1,params);
 % abcboost_save(model,'mymodel.model');
 % model = abcboost_load('mymodel.model');
 params.test_auc = 1;
@@ -307,7 +309,7 @@ res = abcboost_predict(testX,model,params);
 [Y, X] = libsvmread('../../data/covtype.train.libsvm');
 [testY, testX] = libsvmread('../../data/covtype.test.libsvm');
 % Here X and testX are sparse matrices
-model = abcboost_train(Y,X,'abcrobustlogit',100,20,0.1,1,0,params);
+model = abcboost_train(Y,X,'abcrobustlogit',100,20,0.1,params);
 res = abcboost_test(testY,testX,model);
 ```
 
@@ -337,14 +339,14 @@ X = data[:,1:]
 data = np.genfromtxt('../../data/covtype.test.csv',delimiter=',').astype(float)
 testY = data[:,0]
 testX = data[:,1:]
-model = abcboost.train(Y,X,'abcrobustlogit',100,20,0.1,3,0)
+model = abcboost.train(Y,X,'abcrobustlogit',100,20,0.1)
 # All command line supported parameters can be passed as optional keyword arguments
 # For example:
-# model = abcboost.train(Y,X,'abcrobustlogit',100,20,0.1,3,0,n_threads=1)
+# model = abcboost.train(Y,X,'abcrobustlogit',100,20,0.1,search=2,gap=5,n_threads=1)
 # abcboost.save(model,'mymodel.model')
 # model = abcboost.load('mymodel.model')
 res = abcboost.test(testY,testX,model,test_auc=1)
-% predict without label 
+# predict without label 
 res = abcboost.predict(testX,model,test_auc=1)
 # Alternatively, we also support libsvm-format sparse matrix
 # We use sklearn to load libsvm format data as a scipy.sparse matrix
@@ -355,7 +357,7 @@ import sklearn.datasets
 [X, Y] = sklearn.datasets.load_svmlight_file('../../data/covtype.train.libsvm')
 [testX, testY] = sklearn.datasets.load_svmlight_file('../../data/covtype.train.libsvm')
 # The training and testing interfaces are unified for both dense and sparse matrices
-model = abcboost.train(Y,X,'abcrobustlogit',100,20,0.1,3,0)
+model = abcboost.train(Y,X,'abcrobustlogit',100,20,0.1)
 res = abcboost.test(testY,testX,model)
 ```
 

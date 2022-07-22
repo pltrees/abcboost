@@ -10,7 +10,7 @@
 # limitations under the License.
 
 
-abcboost_train <- function(train_Y,train_X,model_name,iter,leaves,shinkage,search = 2,gap = 5,params=NULL){
+abcboost_train <- function(train_Y,train_X,model_name,iter,leaves,shinkage,params=NULL){
   train_Y = as.numeric(train_Y)
   if(is(train_X,'sparseMatrix') == FALSE){
     train_X = as.matrix(train_X)
@@ -29,9 +29,9 @@ abcboost_train <- function(train_Y,train_X,model_name,iter,leaves,shinkage,searc
     train_X <- t(as(train_X,'dgCMatrix'))
     leni = length(train_X@i)
     lenp = length(train_X@p)
-    model <-.Call("train_sparse",as.double(train_Y),as.integer(train_X@i),as.integer(leni),as.integer(train_X@p),as.integer(lenp),as.double(train_X@x),as.integer(n_row_x),as.integer(n_col_x),model_name,as.integer(iter),as.integer(leaves),as.double(shinkage),as.integer(search),as.integer(gap),as.list(params))
+    model <-.Call("train_sparse",as.double(train_Y),as.integer(train_X@i),as.integer(leni),as.integer(train_X@p),as.integer(lenp),as.double(train_X@x),as.integer(n_row_x),as.integer(n_col_x),model_name,as.integer(iter),as.integer(leaves),as.double(shinkage),as.list(params))
   }else{
-    model <-.Call("train",as.double(train_Y),as.double(train_X),as.integer(n_row_x),as.integer(n_col_x),model_name,as.integer(iter),as.integer(leaves),as.double(shinkage),as.integer(search),as.integer(gap),as.list(params))
+    model <-.Call("train",as.double(train_Y),as.double(train_X),as.integer(n_row_x),as.integer(n_col_x),model_name,as.integer(iter),as.integer(leaves),as.double(shinkage),as.list(params))
   }
 	return(model)
 }
