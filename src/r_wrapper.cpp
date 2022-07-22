@@ -286,6 +286,7 @@ SEXP test(SEXP Y, SEXP X, SEXP row, SEXP col, SEXP r_model, SEXP params = NILSXP
   model->init();
   model->setupExperiment();
 
+  model->testlog.clear();
   model->test();
   int n_classes = model->getData()->data_header.n_classes;
 	std::vector<double> prob(1);
@@ -331,6 +332,7 @@ SEXP test(SEXP Y, SEXP X, SEXP row, SEXP col, SEXP r_model, SEXP params = NILSXP
   }
 
   UNPROTECT(6);
+  model->testlog.clear();
   return ret;
 }
 
@@ -484,6 +486,7 @@ SEXP test_sparse(SEXP Y,SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x, 
   model->init();
   model->setupExperiment();
 
+  model->testlog.clear();
   model->test();
   int n_classes = model->getData()->data_header.n_classes;
 	std::vector<double> prob(1);
@@ -529,6 +532,7 @@ SEXP test_sparse(SEXP Y,SEXP X_i, SEXP r_leni, SEXP X_p, SEXP r_lenp, SEXP X_x, 
   }
 
   UNPROTECT(8);
+  model->testlog.clear();
   return ret;
 }
 
