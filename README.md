@@ -217,12 +217,14 @@ install.packages('R/abcboost_1.0.0.tar.gz', repos = NULL, type = 'source')
 One can use `setwd` to change the current working directory. Note that we should first remove the package (`remove.packages('abcboost')`) if we hope to replace the single-thread version with the multi-thread version. 
 
 
-Function signature:
+Function description (no need to copy to console):
 ```
-abcboost_train <- function(train_Y,train_X,model_name,iter,leaves,shinkage,search = 2,gap = 5,params=NULL)
-abcboost_test <- function(test_Y,test_X,model)
-abcboost_save_model <- function(model,path)
-abcboost_load_model <- function(path)
+# No need to copy to console
+# abcboost_train: (train_Y,train_X,model_name,iter,leaves,shinkage,search=2,gap=5,params=NULL)
+# abcboost_test: (test_Y,test_X,model,params=NULL)
+# abcboost_predict: (test_X,model,params=NULL)
+# abcboost_save_model: function(model,path)
+# abcboost_load_model: function(path)
 ```
 Here we show an example of training and testing:
 ```
@@ -295,9 +297,10 @@ params.n_threads = 1;
 model = abcboost_train(Y,X,'abcrobustlogit',100,20,0.1,1,0,params);
 % abcboost_save(model,'mymodel.model');
 % model = abcboost_load('mymodel.model');
-res = abcboost_test(testY,testX,model);
+params.test_auc = 1;
+res = abcboost_test(testY,testX,model,params);
 % predict without label 
-res = abcboost_predict(testX,model);
+res = abcboost_predict(testX,model,params);
 
 % Sparse matlab matrix is also supported
 % For example, we included the libsvmread.c from the LIBSVM package for data loading
