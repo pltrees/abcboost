@@ -95,7 +95,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs,
   if(config->save_prob){
     len = 3;
   }
-  char* field_names[len];
+  char** field_names = new char*[len];
   for(int i = 0;i < len;++i){
     field_names[i] = (char*)mxMalloc(20);
     memcpy(field_names[i],cc_field_names[i],(strlen(cc_field_names[i]) + 1) * sizeof(char));
@@ -104,6 +104,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs,
   plhs[0] = mxCreateStructMatrix(1,1,len,(const char**)field_names);
   for(int i = 0;i < len;++i)
     mxFree(field_names[i]);
+  delete[] field_names;
 
   auto* ret_prediction = mxCreateDoubleMatrix(X_n_row,1,mxREAL);
   double* p_ret_prediction = mxGetPr(ret_prediction);
