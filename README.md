@@ -328,6 +328,7 @@ Make sure `abcboost.so` is in the current directory.
 Paste the following code in a `python3` interactive shell:
 ```
 import numpy as np
+import abcboost
 # We use a matrix-format sample data here
 data = np.genfromtxt('../../data/covtype.train.csv',delimiter=',').astype(float)
 #
@@ -336,16 +337,15 @@ X = data[:,1:]
 data = np.genfromtxt('../../data/covtype.test.csv',delimiter=',').astype(float)
 testY = data[:,0]
 testX = data[:,1:]
-import abcboost
 model = abcboost.train(Y,X,'abcrobustlogit',100,20,0.1,3,0)
 # All command line supported parameters can be passed as optional keyword arguments
 # For example:
 # model = abcboost.train(Y,X,'abcrobustlogit',100,20,0.1,3,0,n_threads=1)
 # abcboost.save(model,'mymodel.model')
 # model = abcboost.load('mymodel.model')
-res = abcboost.test(testY,testX,model)
+res = abcboost.test(testY,testX,model,test_auc=1)
 % predict without label 
-res = abcboost.predict(testX,model)
+res = abcboost.predict(testX,model,test_auc=1)
 # Alternatively, we also support libsvm-format sparse matrix
 # We use sklearn to load libsvm format data as a scipy.sparse matrix
 # sklearn can be installed as: python3 -m pip install scikit-learn
