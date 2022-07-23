@@ -186,6 +186,7 @@ The labels in the specified additional files are not used in the training. Only 
 * `-model_abc_sample_min_data` `-abc_sample_min_data` (default 2000) the minimum sampled data for base class selection. This parameter only takes into effect when `-abc_sample_rate` is less than `1.0`
 #### Regression related:
 * `-regression_lp_loss`, `-lp` (default 2.0) whether use Lp norm instead of L2 norm. p (p >= 1.0) has to be specified
+* `-regression_test_lp`, `-test_lp` (default none) display Lp norm as an additional column in test log. p (p >= 1.0) has to be specified
 * `-regression_use_hessian` 0/1 (default 1) whether use second-order derivatives in the regression. This parameter only takes into effect when `-regression_lp_loss p` is set and `p` is greater than `2`.
 * `-regression_huber_loss`, `-huber` 0/1 (default 0) whether use huber loss
 * `-regression_huber_delta`, `-huber_delta` the delta parameter for huber loss. This parameter only takes into effect when `-regression_huber_loss 1` is set
