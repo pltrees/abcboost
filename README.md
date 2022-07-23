@@ -6,7 +6,7 @@ This toolkit consists of ABCBoost, a concrete implementation of [Fast ABCBoost](
 ### Installation guide
 Run the following commands to build ABCBoost from source:
 ```
-git clone git@github.com:pltrees/abcboost.git
+git clone https://github.com/pltrees/abcboost.git
 cd abcboost
 mkdir build
 cd build
@@ -24,7 +24,7 @@ cmake -DOMP=ON ..
 make clean
 make
 ```
-Note that the default g++ in Mac may not support OpenMP.   
+Note that the default g++ on Mac may not support OpenMP.   
 
 
 If we set `-DNATIVE=ON`, the compiler may better optimize the code according to specific native CPU instructions: 
@@ -33,7 +33,7 @@ cmake -DOMP=ON -DNATIVE=ON ..
 make clean
 make
 ```
-Again, we do not recommend to turn on this option in Mac. 
+Again, we do not recommend to turn on this option on Mac. 
 
 
 To build ABCBoost with GPU support, install [NVIDIA CUDA Toolkits](https://developer.nvidia.com/cuda-downloads) and set the option `CUDA=ON`:
@@ -319,12 +319,16 @@ Before the compilation, `pybind11` should be installed:
 
 `python3 -m pip install pybind11`
 
-To compile the single-thread version on Linux:
+To compile the single-thread version on Linux (not Mac):
 ```
 cd python/linux
 bash compile_py.sh
 ```
-After the compilation, a shared library `abcboost.so` is generated.
+After the compilation, a shared library `abcboost.so` is generated. 
+
+Analogously, there are two folders for Mac: `python/mac_m1`, `python/mac_x86`.
+
+For windows, we provide the shared (python3.10) library `abcboost.pyd` under `python/windows`. 
 
 Make sure `abcboost.so` is in the current directory.
 Paste the following code in a `python3` interactive shell:
@@ -363,9 +367,15 @@ res = abcboost.test(testY,testX,model)
 
 
 ## References
-* Li, Ping. "ABC-Boost: Adaptive Base Class Boost for Multi-Class Classification." _ICML_ 2009.
-* Li, Ping. "Robust LogitBoost and Adaptive Base Class (ABC) LogitBoost." _UAI_ 2010.
-* Li, Ping and Zhao, Weijie. "Fast ABC-Boost: A Unified Framework for Selecting the Base Class in Multi-Class Classification." _arXiv preprint arXiv:2205.10927_ 2022.
+* Li, Ping. [ABC-Boost: Adaptive Base Class Boost for Multi-Class Classification](https://icml.cc/Conferences/2009/papers/417.pdf). ICML 2009.
+* Li, Ping. [Robust LogitBoost and Adaptive Base Class (ABC) LogitBoost](https://event.cwi.nl/uai2010/papers/UAI2010_0282.pdf). UAI 2010.
+* Li, Ping and Zhao, Weijie. [Fast ABC-Boost: A Unified Framework for Selecting the Base Class in Multi-Class Classification](https://arxiv.org/pdf/2205.10927.pdf). arXiv preprint arXiv:2205.10927 2022.
+* Li, Ping and Zhao, Weijie. [Package for Fast ABC-Boost](https://arxiv.org/pdf/2207.08770.pdf). arXiv preprint arXiv:2207.08770, 2022.
+* Li, Ping and Zhao, Weijie. [pGMM Kernel Regression and Comparisons with Boosted Trees](https://arxiv.org/pdf/2207.08667.pdf). arXiv preprint arXiv:2207.08667, 2022.
+* Lecture notes on trees and boosting (pages 14-77) [http://www.stat.rutgers.edu/home/pingli/doc/PingLiTutorial.pdf](http://www.stat.rutgers.edu/home/pingli/doc/PingLiTutorial.pdf)
+
+This toolkit consists of ABCBoost, a concrete implementation of [Fast ABCBoost](https://arxiv.org/pdf/2205.10927.pdf) (Fast Adaptive Base Class Boost). 
+
 
 ## Copyright and License
 ABCBoost is provided under the Apache-2.0 license.
