@@ -374,8 +374,6 @@ res = abcboost.test(testY,testX,model)
 * Li, Ping and Zhao, Weijie. [pGMM Kernel Regression and Comparisons with Boosted Trees](https://arxiv.org/pdf/2207.08667.pdf). arXiv preprint arXiv:2207.08667, 2022.
 * Lecture notes on trees and boosting (pages 14-77) [http://www.stat.rutgers.edu/home/pingli/doc/PingLiTutorial.pdf](http://www.stat.rutgers.edu/home/pingli/doc/PingLiTutorial.pdf)
 
-This toolkit consists of ABCBoost, a concrete implementation of [Fast ABCBoost](https://arxiv.org/pdf/2205.10927.pdf) (Fast Adaptive Base Class Boost). 
-
 
 ## Copyright and License
 ABCBoost is provided under the Apache-2.0 license.
