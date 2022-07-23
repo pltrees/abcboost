@@ -137,7 +137,7 @@ class Regression : public GradientBoosting {
   void computeHessianResidual();
   double getLSLoss();
   double getL1Loss();
-  double getLpLoss();
+  double getLpLoss(const double p);
   double getHuberLoss();
   int loadModel();
   void saveModel(int iter);
