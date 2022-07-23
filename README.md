@@ -369,9 +369,9 @@ res = abcboost.test(testY,testX,model)
 ## References
 * Ping Li. [ABC-Boost: Adaptive Base Class Boost for Multi-Class Classification](https://icml.cc/Conferences/2009/papers/417.pdf). ICML 2009.
 * Ping Li. [Robust LogitBoost and Adaptive Base Class (ABC) LogitBoost](https://event.cwi.nl/uai2010/papers/UAI2010_0282.pdf). UAI 2010.
-* Ping Li and Weijie Zhao. [Fast ABC-Boost: A Unified Framework for Selecting the Base Class in Multi-Class Classification](https://arxiv.org/pdf/2205.10927.pdf). preprint arXiv:2205.10927 2022.
-* Ping Li and Weijie Zhao. [Package for Fast ABC-Boost](https://arxiv.org/pdf/2207.08770.pdf). preprint arXiv:2207.08770, 2022.
-* Ping Li and Weijie Zhao. [pGMM Kernel Regression and Comparisons with Boosted Trees](https://arxiv.org/pdf/2207.08667.pdf).  preprint arXiv:2207.08667, 2022.
+* Ping Li and Weijie Zhao. [Fast ABC-Boost: A Unified Framework for Selecting the Base Class in Multi-Class Classification](https://arxiv.org/pdf/2205.10927.pdf).  arXiv:2205.10927 2022.
+* Ping Li and Weijie Zhao. [Package for Fast ABC-Boost](https://arxiv.org/pdf/2207.08770.pdf).  arXiv:2207.08770, 2022.
+* Ping Li and Weijie Zhao. [pGMM Kernel Regression and Comparisons with Boosted Trees](https://arxiv.org/pdf/2207.08667.pdf).   arXiv:2207.08667, 2022.
 * Lecture notes on trees & boosting (pages 14-77) [www.stat.rutgers.edu/home/pingli/doc/PingLiTutorial.pdf](www.stat.rutgers.edu/home/pingli/doc/PingLiTutorial.pdf)
 
 
