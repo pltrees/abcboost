@@ -694,52 +694,49 @@ void Regression::print_train_message(int iter,double loss,double iter_time){
 void Regression::print_test_message(int iter,double iter_time,double& low_loss){
   if(config->no_label)
     return;
-  double loss = 0;
+  double loss = config->regression_huber_loss ? getHuberLoss() : getLpLoss();
   std::string loss_name = "";
   if(config->regression_huber_loss){
-    const double p = config->regression_print_test_lp ? config->regression_test_lp : config->regression_lp_loss;
     std::ostringstream sstream;
-    sstream << "Huber_L" << p << "_loss";
+    sstream << "Huber_L" << config->regression_lp_loss << "_loss";
     loss_name = sstream.str();
-    loss = getHuberLoss();
-  }else if(config->regression_print_test_lp){
+  }else if(config->regression_lp_loss == 1.0){
+    loss_name = "L1_loss";
+  }else if(config->regression_lp_loss != 2.0){
     std::ostringstream sstream;
-    sstream << "L" << config->regression_test_lp << "_loss";
+    sstream << "L" << config->regression_lp_loss << "_loss";
     loss_name = sstream.str();
-    loss = getLpLoss(config->regression_test_lp);
   }else{
-    loss = getLSLoss();
+    loss_name = "L2_loss";
   }
 
   if(low_loss > loss)
     low_loss = loss;
-  double l2_loss = 0;
-  double l1_loss = getL1Loss();
-  if(loss_name != ""){
+  double l2_loss = loss;
+  if(loss_name != "L2_loss"){
     l2_loss = getLSLoss();
-    printf("%4d | L1_loss: %20.14e | L2_loss: %20.14e | %s: %-20.14e | time: %.5f\n", iter,
-       l1_loss, l2_loss, loss_name.c_str(), loss, iter_time);
+    printf("%4d | L2_loss: %20.14e | %s: %-20.14e | time: %.5f\n", iter,
+       l2_loss, loss_name.c_str(), loss, iter_time);
   }else{
-    l2_loss = loss;
-    printf("%4d | L1_loss: %20.14e | L2_loss: %20.14e | time: %.5f\n", iter,
-       l1_loss, loss, iter_time);
+    printf("%4d | L2_loss: %20.14e | time: %.5f\n", iter,
+       loss, iter_time);
   }
     
 #ifdef USE_R_CMD
  R_FlushConsole();
 #endif
   if(config->save_log){
-    if(loss_name != ""){
-      fprintf(log_out,"%4d %20.14e %20.14e %.5f\n", iter, l1_loss, l2_loss, loss, iter_time);
+    if(loss_name != "L2_loss"){
+      fprintf(log_out,"%4d %20.14e %20.14e %.5f\n", iter, l2_loss, loss, iter_time);
     }else{
-      fprintf(log_out,"%4d %20.14e %.5f\n", iter, l1_loss, loss, iter_time);
+      fprintf(log_out,"%4d %20.14e %.5f\n", iter, loss, iter_time);
     }
   }
   if(config->from_wrapper){
-    if(loss_name != ""){
-      testlog.push_back(std::vector<double>({iter * 1.0,l1_loss,l2_loss,loss,iter_time}));
+    if(loss_name != "L2_loss"){
+      testlog.push_back(std::vector<double>({iter * 1.0,l2_loss,loss,iter_time}));
     }else{
-      testlog.push_back(std::vector<double>({iter * 1.0,l1_loss,loss,iter_time}));
+      testlog.push_back(std::vector<double>({iter * 1.0,loss,iter_time}));
     }
   }
 }
@@ -817,7 +814,7 @@ void Regression::train() {
     tree->updateFeatureImportance(m);
     updateF(0, tree);
     additive_trees[m][0] = std::unique_ptr<Tree>(tree);
-    auto loss = config->regression_huber_loss ? getHuberLoss() : getLpLoss(config->regression_lp_loss);
+    auto loss = config->regression_huber_loss ? getHuberLoss() : getLpLoss();
     if ((m + 1) % config->model_eval_every == 0)
       print_train_message(m + 1,loss,t1.get_time_restart());
     if (config->save_model && (m + 1) % config->model_save_every == 0) saveModel(m + 1);
@@ -910,7 +907,8 @@ double Regression::getHuberLoss() {
   return loss / data->n_data;
 }
 
-double Regression::getLpLoss(const double p) {
+double Regression::getLpLoss() {
+  const double& p = config->regression_lp_loss;
   if(p == 1)
     return getL1Loss();
   if(p == 2)
