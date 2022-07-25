@@ -940,4 +940,319 @@ void Data::constructAuxData(){
 	}
 }
 
+void Data::cleanCSV(){
+  const std::string path = config->data_path;
+  if (!doesFileExist(path) && config->from_wrapper == false) {
+    fprintf(stderr, "[ERROR] Data file does not exist!\n");
+    exit(1);
+  }
+  std::ifstream infile(path);
+  std::string line;
+  std::vector<std::string> buffer;
+
+  while (getline(infile, line)) {
+    buffer.push_back(line);
+  }
+
+  int T = 1;
+#pragma omp parallel
+#pragma omp master
+  {
+    T = config->n_threads;  // omp_get_num_threads();
+  }
+  omp_set_num_threads(T);
+  int n_lines = buffer.size();
+  int step = (n_lines + T - 1) / T;
+
+  std::vector<std::vector<std::vector<unsigned int>>> i_global;
+  std::vector<std::vector<std::vector<double>>> v_global;
+  std::vector<std::vector<double>> Y_global;
+  std::vector<unsigned int> n_feat_global;
+  i_global.resize(T);
+  v_global.resize(T);
+  Y_global.resize(T);
+  n_feat_global.resize(T);
+
+  omp_set_num_threads(T);
+  const int label_column = config->label_column;
+  const std::vector<int> ignore_columns = splitint(config->ignore_columns);
+  const std::vector<int> ignore_rows = splitint(config->ignore_rows);
+  const std::vector<int> additional_categorical_columns = splitint(config->additional_categorical_columns);
+  const std::vector<int> additional_numeric_columns = splitint(config->additional_numeric_columns);
+  const int one_based = 1;
+  auto tmp = split(config->missing_values);
+  const std::set<std::string> missing_values(tmp.begin(),tmp.end());
+  const int category_limit = config->category_limit;
+
+  std::vector<std::set<std::string>> global_labels(T);
+  std::vector<std::vector<std::set<std::string>>> global_val_map(T);
+  std::vector<std::vector<std::set<std::string>>> global_numeric_val_map(T);
+  
+#pragma omp parallel
+  {
+    int n_feats_local = 0;
+    int t = omp_get_thread_num();
+    int start = t * step, end = std::min(n_lines, (t + 1) * step);
+    std::set<std::string>& local_labels = global_labels[t];
+    std::vector<std::set<std::string>>& local_val_map = global_val_map[t];
+    std::vector<std::set<std::string>>& local_numeric_val_map = global_numeric_val_map[t];
+
+    for (int i = start; i < end; ++i) {
+      if(invector(i + one_based,ignore_rows))
+        continue;
+      const std::vector<std::string> vals = split(buffer[i]);
+      if(vals.size() > n_feats_local)
+        n_feats_local = vals.size();
+      for(int j = 0;j < vals.size();++j){
+        if(invector(j + one_based,ignore_columns)){
+          continue;
+        }else if(j + one_based == label_column){
+          local_labels.insert(trim(vals[j]));
+        }else if(invector(j + one_based,additional_categorical_columns)){
+          if(j >= local_val_map.size())
+            local_val_map.resize(j + 1);
+          local_val_map[j].insert(trim(vals[j]));
+        }else if(invector(j + one_based,additional_numeric_columns)){
+          // do nothing;
+        }else{
+          auto val = trim(vals[j]);
+          auto val2 = to_lower(val);
+          if(missing_values.count(val2) != 0){
+            continue;
+          }
+          if(is_numeric(val)){
+            if(j >= local_numeric_val_map.size())
+              local_numeric_val_map.resize(j + 1);
+            if(local_numeric_val_map[j].size() + 1 < category_limit)
+              local_numeric_val_map[j].insert(val);
+          }else{
+            if(j >= local_val_map.size())
+              local_val_map.resize(j + 1);
+            local_val_map[j].insert(val);
+          }
+        }
+      }
+    }
+#pragma omp critical
+    {
+      if (n_feats_local > data_header.n_feats)
+        data_header.n_feats = n_feats_local;
+    };
+  }
+
+  for(int t = 1;t < T;++t){
+    global_labels[0].insert(global_labels[t].begin(),global_labels[t].end());
+  }
+  for(int j = 0;j < data_header.n_feats;++j){
+    global_val_map[0].resize(data_header.n_feats);
+    global_numeric_val_map[0].resize(data_header.n_feats);
+    for(int t = 1;t < T;++t){
+      if(j < global_val_map[t].size())
+        global_val_map[0][j].insert(global_val_map[t][j].begin(),global_val_map[t][j].end());
+      if(j < global_numeric_val_map[t].size())
+        global_numeric_val_map[0][j].insert(global_numeric_val_map[t][j].begin(),global_numeric_val_map[t][j].end());
+    }
+  }
+  // mapping construction done
+
+  std::set<std::string>& labels = global_labels[0];
+  std::vector<std::set<std::string>>& val_map = global_val_map[0];
+  std::vector<std::set<std::string>>& numeric_val_map = global_numeric_val_map[0];
+
+  bool numeric_labels = true;
+  for(const auto& p : labels){
+    if(is_numeric(p) == false)
+      numeric_labels = false;
+  }
+  std::unordered_map<std::string,int> label_map;
+  if(numeric_labels == false){
+    int curr = 0;
+    for(const auto& p : labels){
+      label_map[p] = curr;
+      ++curr;
+    }
+  }
+  std::vector<bool> is_categorical(data_header.n_feats,false);
+  int cnt_numeric = 0;
+  int cnt_categorical = 0;
+  std::vector<int> columns_map(data_header.n_feats);
+  for(int i = 0;i < data_header.n_feats;++i){
+    if(invector(i + one_based,additional_categorical_columns)){
+      is_categorical[i] = true;
+    }else if(val_map[i].size() > 0){
+      if(val_map[i].size() + numeric_val_map[i].size() > category_limit){
+        printf("[Warning] found a very large category in column %d, %zu unique non-numeric values, %zu+ unique numeric values. We will treat this column as numeric and regard all non-numeric ones as missing. You can specifiy this column in -additional_categorical_columns to make it all categorical\n",i + one_based,numeric_val_map[i].size(),val_map[i].size());
+        is_categorical[i] = false;
+      }else{
+        val_map[i].insert(numeric_val_map[i].begin(),numeric_val_map[i].end());
+        is_categorical[i] = true;
+      }
+    }else{
+      is_categorical[i] = false;
+    }
+    if(is_categorical[i])
+      ++cnt_categorical;
+    else
+      ++cnt_numeric;
+  }
+  int curr_categorical = 0;
+  int curr_numeric = 0;
+  std::vector<std::unordered_map<std::string,int>> category_map(data_header.n_feats);
+  int output_columns = cnt_numeric;
+  for(int i = 0;i < data_header.n_feats;++i){
+    if(is_categorical[i]){
+      columns_map[i] = cnt_numeric + curr_categorical;
+      curr_categorical += val_map[i].size();
+      int curr = 0;
+      for(const auto& p : val_map[i]){
+        category_map[i][p] = curr + 1; // since the missing category will be 0
+        ++curr;
+      }
+      if(output_columns < cnt_numeric + curr_categorical)
+        output_columns = cnt_numeric + curr_categorical;
+    }else{
+      columns_map[i] = curr_numeric;
+      ++curr_numeric;
+    }
+  }
+
+  const bool output_libsvm = (config->cleaned_format != "csv");
+  std::string output_path = "";
+  if(output_libsvm)
+    output_path = path + "_cleaned.libsvm";
+  else
+    output_path = path + "_cleaned.csv";
+  FILE* fp = fopen(output_path.c_str(),"w");
+
+  double missing_substitution = stod(config->missing_substitution);
+  int output_lines = 0;
+  for(int i = 0;i < n_lines;++i){
+    if(invector(i + one_based,ignore_rows))
+      continue;
+    const std::vector<std::string> vals = split(buffer[i]);
+    double label = 0;
+    std::vector<std::pair<int,double>> kv;
+    for(int j = 0;j < vals.size();++j){
+      if(invector(j + one_based,ignore_columns)){
+        continue;
+      }else if(j + one_based == label_column){
+        if(numeric_labels)
+          label = stod(trim(vals[j]));
+        else
+          label = label_map[trim(vals[j])];
+      }else{
+        auto val = trim(vals[j]);
+        auto val2 = to_lower(val);
+        bool is_missing = (missing_values.count(val2) != 0);
+        int idx = columns_map[j];
+        double v = 1;
+        int offset = 0;
+        if(is_categorical[j]){
+          if(is_missing){
+            offset = 0;
+          }else{
+            auto it = category_map[j].find(val);
+            if(it == category_map[j].end()){
+              printf("[Warning] found unknown category (%s) in column %d, mapping it as 0\n",val.c_str(),j + one_based);
+              offset = 0;
+            }else{
+              offset = it->second;
+            }
+          }
+        }else{
+          if(is_missing){
+            v = missing_substitution;
+          }else{
+            try{
+              v = stod(val);
+            }catch(...){
+              v = missing_substitution;
+            }
+          }
+        }
+        kv.push_back(std::make_pair(idx + offset,v));
+      }
+    }
+    std::sort(kv.begin(),kv.end());
+    if(output_libsvm){
+      fprintf(fp,"%g",label);
+      for(const auto& p : kv){
+        if(p.second != 0)
+          fprintf(fp," %d:%g",p.first + 1,p.second);
+      }
+      fprintf(fp,"\n");
+    }else{
+      fprintf(fp,"%g",label);
+      int p = 0;
+      for(int i = 0;i < output_columns;++i){
+        if(p < kv.size() && kv[p].first == i){
+          fprintf(fp,",%g",kv[p].second);
+          ++p;
+        }else{
+          fprintf(fp,",%g",missing_substitution);
+        }
+      }
+      fprintf(fp,"\n");
+    }
+    ++output_lines;
+  }
+  fclose(fp);
+
+  if(cnt_categorical > 0){
+    printf("Found categorical columns:");
+    for(int i = 0;i < is_categorical.size();++i){
+      if(is_categorical[i]){
+        printf("%d: ",i + one_based);
+        for(auto it = category_map[i].begin();it != category_map[i].end();++it)
+          printf("(%s) ",it->first.c_str());
+        printf("\n");
+      }
+    }
+    printf("\n");
+  }
+  if(numeric_labels == false){
+    printf("Found non-numeric labels:\n");
+    for(auto it = label_map.begin();it != label_map.end();++it){
+      printf("(%s)->%d ",it->first.c_str(),it->second);
+    }
+    printf("\n");
+  }
+  printf("Cleaning summary: | # data: %d | # numeric features %d | # categorical features: %d | # converted features: %d | # classes: %zu\n", output_lines, cnt_numeric, cnt_categorical, output_columns, labels.size());
+}
+
+inline std::string Data::trim(const std::string& str){
+  const std::string whitespace = " \t";
+  const auto begin = str.find_first_not_of(whitespace);
+  if (begin == std::string::npos)
+    return "";
+  const auto end = str.find_last_not_of(whitespace);
+  return str.substr(begin,end - begin + 1);
+}
+
+inline std::vector<int> Data::splitint(std::string s){
+  std::vector<std::string> tmp = split(s);
+  std::vector<int> ret;
+  ret.reserve(tmp.size());
+  std::transform(tmp.begin(),tmp.end(),std::back_inserter(ret),[&](std::string s) {return stoi(s);});
+  return ret;
+}
+
+inline bool Data::is_numeric(const std::string& s){
+  size_t pos = 0;
+  try{
+    double d = stod(s,&pos);
+  }catch(const std::invalid_argument& e){
+    return false;
+  }
+  return pos == s.length();
+}
+
+inline std::string Data::to_lower(std::string& s){
+  std::string ret = s;
+  std::transform(s.begin(),s.end(),ret.begin(),[](unsigned char c){ return std::tolower(c); });
+  return ret;
+}
+
+
+
 }  // namespace ABCBoost

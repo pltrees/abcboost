@@ -36,6 +36,7 @@ endif()
 
 add_executable(abcboost_train src/train_main.cpp src/data.cpp src/tree.cpp src/model.cpp)
 add_executable(abcboost_predict src/predict_main.cpp src/data.cpp src/tree.cpp src/model.cpp)
+add_executable(abcboost_clean src/clean_main.cpp src/data.cpp)
 
 if (CUDA)
   target_link_libraries(abcboost_train ${CUDA_LIBRARIES})

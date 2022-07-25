@@ -1,6 +1,7 @@
 src/map_main.cpp
 src/train_main.cpp
 src/predict_main.cpp
+src/clean_main.cpp
 src/main.cpp
 src/matlab
 src/python_wrapper.cpp

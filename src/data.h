@@ -128,6 +128,8 @@ class Data {
 
 	void constructAuxData();
 
+  void cleanCSV();
+
  private:
   void adaptiveQuantization();
   unsigned short discretize(std::vector<double>& bin_starts, double value);
@@ -142,7 +144,18 @@ class Data {
   void restoreDenseFeatures();
   bool testDataIsMatrix(std::string path);
 
-  std::vector<std::string> split(const std::string& s, char delimiter = ',');
+  inline std::vector<std::string> split(const std::string& s, char delimiter = ',');
+
+  inline std::string trim(const std::string& str);
+  inline std::vector<int> splitint(std::string s);
+  template<class T>
+  inline bool invector(const T& x,const std::vector<T>& vec){
+    return std::find(vec.begin(),vec.end(),x) != vec.end();
+  }
+  inline bool is_numeric(const std::string& s);
+  inline std::string to_lower(std::string& s);
+
+
   std::vector<double> kmeans_value(std::vector<double>& value, int k);
   std::vector<double> find_bin_ckm(std::vector<double>& fv, size_t n_distinct,
                                    int max_n_bins);

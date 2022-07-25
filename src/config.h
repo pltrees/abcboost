@@ -98,6 +98,18 @@ class Config {
   int use_omp = 0;
   int n_threads = 1;
 
+
+  // Data cleaner
+  std::string ignore_columns = "";
+  std::string ignore_rows = "";
+  int label_column = 1;
+  int category_limit = 10000;
+  std::string additional_categorical_columns = "";
+  std::string additional_numeric_columns = "";
+  std::string missing_values = "ne,na,nan,none,null,unknown,,?";
+  std::string missing_substitution = "0";
+  std::string cleaned_format = "libsvm";
+
   // Others
   bool save_log = true;
   bool save_model = true;
@@ -476,6 +488,24 @@ class Config {
       } else if (key == "model_pretrained_path" || key == "model") {
         std::string str(value);
         model_pretrained_path = str;
+      } else if (key == "ignore_columns") {
+        ignore_columns = value;
+      } else if (key == "ignore_rows") {
+        ignore_rows = value;
+      } else if (key == "label_column") {
+        label_column = stoi(value);
+      } else if (key == "category_limit") {
+        category_limit = stoi(value);
+      } else if (key == "additional_categorical_columns") {
+        additional_categorical_columns = value;
+      } else if (key == "additional_numeric_columns") {
+        additional_numeric_columns = value;
+      } else if (key == "missing_values") {
+        missing_values = value;
+      } else if (key == "missing_substitution") {
+        missing_substitution = value;
+      } else if (key == "cleaned_format") {
+        cleaned_format = value;
       } else
           // others
           if (key == "experiment_folder") {
