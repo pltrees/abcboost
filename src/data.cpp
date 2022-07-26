@@ -946,12 +946,26 @@ void Data::cleanCSV(){
     fprintf(stderr, "[ERROR] Data file does not exist!\n");
     exit(1);
   }
-  std::ifstream infile(path);
-  std::string line;
-  std::vector<std::string> buffer;
+  std::vector<std::string> all_files = split(config->additional_files);
+  for(auto p : all_files){
+    if (!doesFileExist(p)) {
+      fprintf(stderr, "[ERROR] Data file does not exist!\n");
+      exit(1);
+    }
+  }
+  all_files.insert(all_files.begin(),path);
+  
 
-  while (getline(infile, line)) {
-    buffer.push_back(line);
+  std::vector<std::string> buffer;
+  std::vector<int> lines_offset;
+
+  for(auto path : all_files){
+    std::ifstream infile(path);
+    std::string line;
+    while (getline(infile, line)) {
+      buffer.push_back(line);
+    }
+    lines_offset.push_back(buffer.size());
   }
 
   int T = 1;
@@ -1122,92 +1136,97 @@ void Data::cleanCSV(){
   }
 
   const bool output_libsvm = (config->cleaned_format != "csv");
-  std::string output_path = "";
-  if(output_libsvm)
-    output_path = path + "_cleaned.libsvm";
-  else
-    output_path = path + "_cleaned.csv";
-  FILE* fp = fopen(output_path.c_str(),"w");
-
-  double missing_substitution = stod(config->missing_substitution);
+  int curr_line = 0;
   int output_lines = 0;
-  for(int i = 0;i < n_lines;++i){
-    if(invector(i + one_based,ignore_rows))
-      continue;
-    const std::vector<std::string> vals = split(buffer[i]);
-    double label = 0;
-    std::vector<std::pair<int,double>> kv;
-    for(int j = 0;j < vals.size();++j){
-      if(invector(j + one_based,ignore_columns)){
+  for(int path_iter = 0;path_iter < all_files.size();++path_iter){
+    auto path = all_files[path_iter];
+    std::string output_path = "";
+    if(output_libsvm)
+      output_path = path + "_cleaned.libsvm";
+    else
+      output_path = path + "_cleaned.csv";
+    FILE* fp = fopen(output_path.c_str(),"w");
+
+    double missing_substitution = stod(config->missing_substitution);
+    for(int i = curr_line;i < lines_offset[path_iter];++i){
+      if(invector(i + one_based,ignore_rows))
         continue;
-      }else if(j + one_based == label_column){
-        auto val = trim(vals[j]);
-        auto val2 = to_lower(val);
-        if(missing_values.count(val2) != 0){
-          printf("[Warning] found missing label in row %d. Ignoring this row\n",i + one_based);
+      const std::vector<std::string> vals = split(buffer[i]);
+      double label = 0;
+      std::vector<std::pair<int,double>> kv;
+      for(int j = 0;j < vals.size();++j){
+        if(invector(j + one_based,ignore_columns)){
           continue;
-        }
-        if(numeric_labels)
-          label = stod(val);
-        else
-          label = label_map[val];
-      }else{
-        auto val = trim(vals[j]);
-        auto val2 = to_lower(val);
-        bool is_missing = (missing_values.count(val2) != 0);
-        int idx = columns_map[j];
-        double v = 1;
-        int offset = 0;
-        if(is_categorical[j]){
-          if(is_missing){
-            offset = 0;
-          }else{
-            auto it = category_map[j].find(val);
-            if(it == category_map[j].end()){
-              printf("[Warning] found unknown category (%s) in column %d, mapping it as 0\n",val.c_str(),j + one_based);
+        }else if(j + one_based == label_column){
+          auto val = trim(vals[j]);
+          auto val2 = to_lower(val);
+          if(missing_values.count(val2) != 0){
+            printf("[Warning] found missing label in row %d. Ignoring this row\n",i + one_based);
+            continue;
+          }
+          if(numeric_labels)
+            label = stod(val);
+          else
+            label = label_map[val];
+        }else{
+          auto val = trim(vals[j]);
+          auto val2 = to_lower(val);
+          bool is_missing = (missing_values.count(val2) != 0);
+          int idx = columns_map[j];
+          double v = 1;
+          int offset = 0;
+          if(is_categorical[j]){
+            if(is_missing){
               offset = 0;
             }else{
-              offset = it->second;
+              auto it = category_map[j].find(val);
+              if(it == category_map[j].end()){
+                printf("[Warning] found unknown category (%s) in column %d, mapping it as 0\n",val.c_str(),j + one_based);
+                offset = 0;
+              }else{
+                offset = it->second;
+              }
             }
-          }
-        }else{
-          if(is_missing){
-            v = missing_substitution;
           }else{
-            try{
-              v = stod(val);
-            }catch(...){
+            if(is_missing){
               v = missing_substitution;
+            }else{
+              try{
+                v = stod(val);
+              }catch(...){
+                v = missing_substitution;
+              }
             }
           }
-        }
-        kv.push_back(std::make_pair(idx + offset,v));
-      }
-    }
-    std::sort(kv.begin(),kv.end());
-    if(output_libsvm){
-      fprintf(fp,"%g",label);
-      for(const auto& p : kv){
-        if(p.second != 0)
-          fprintf(fp," %d:%g",p.first + 1,p.second);
-      }
-      fprintf(fp,"\n");
-    }else{
-      fprintf(fp,"%g",label);
-      int p = 0;
-      for(int i = 0;i < output_columns;++i){
-        if(p < kv.size() && kv[p].first == i){
-          fprintf(fp,",%g",kv[p].second);
-          ++p;
-        }else{
-          fprintf(fp,",%g",missing_substitution);
+          kv.push_back(std::make_pair(idx + offset,v));
         }
       }
-      fprintf(fp,"\n");
+      std::sort(kv.begin(),kv.end());
+      if(output_libsvm){
+        fprintf(fp,"%g",label);
+        for(const auto& p : kv){
+          if(p.second != 0)
+            fprintf(fp," %d:%g",p.first + 1,p.second);
+        }
+        fprintf(fp,"\n");
+      }else{
+        fprintf(fp,"%g",label);
+        int p = 0;
+        for(int i = 0;i < output_columns;++i){
+          if(p < kv.size() && kv[p].first == i){
+            fprintf(fp,",%g",kv[p].second);
+            ++p;
+          }else{
+            fprintf(fp,",%g",missing_substitution);
+          }
+        }
+        fprintf(fp,"\n");
+      }
+      ++output_lines;
     }
-    ++output_lines;
+    curr_line = lines_offset[path_iter];
+    fclose(fp);
   }
-  fclose(fp);
 
   if(cnt_categorical > 0){
     printf("Found categorical columns:");
