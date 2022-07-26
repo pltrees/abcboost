@@ -988,12 +988,33 @@ void Data::cleanCSV(){
   n_feat_global.resize(T);
 
   omp_set_num_threads(T);
+  const int one_based = 1;
   const int label_column = config->label_column;
   const std::vector<int> ignore_columns = splitint(config->ignore_columns);
-  const std::vector<int> ignore_rows = splitint(config->ignore_rows);
+  std::vector<int> each_ignore_rows = splitint(config->ignore_rows);
+  std::vector<int> ignore_rows;
+  int left_bound = 0;
+  for(int i = 0;i < lines_offset.size();++i){
+    for(auto p : each_ignore_rows){
+      if(p != 0){
+        int goal = 0;
+        if(p > 0){
+          goal = left_bound + p - one_based;
+        }else{
+          goal = lines_offset[i] + p;
+        }
+        if(goal >= left_bound &&  goal < lines_offset[i])
+          ignore_rows.push_back(goal + one_based);
+        else
+          printf("[Warning] no row %d for %s. Ignoring.\n",p,all_files[i].c_str());
+      }else{
+        printf("[Warning] ignore_rows index should not be 0\n");
+      }
+    }
+    left_bound = lines_offset[i];
+  }
   const std::vector<int> additional_categorical_columns = splitint(config->additional_categorical_columns);
   const std::vector<int> additional_numeric_columns = splitint(config->additional_numeric_columns);
-  const int one_based = 1;
   auto tmp = split(config->missing_values);
   const std::set<std::string> missing_values(tmp.begin(),tmp.end());
   const int category_limit = config->category_limit;
@@ -1018,20 +1039,20 @@ void Data::cleanCSV(){
       if(vals.size() > n_feats_local)
         n_feats_local = vals.size();
       for(int j = 0;j < vals.size();++j){
-        if(invector(j + one_based,ignore_columns)){
+        if(invector(j + one_based,ignore_columns) || invector(j - (int)vals.size(),ignore_columns)){
           continue;
-        }else if(j + one_based == label_column){
+        }else if(j + one_based == label_column || j - (int)vals.size() == label_column){
           auto val = trim(vals[j]);
           auto val2 = to_lower(val);
           if(missing_values.count(val2) != 0){
             continue;
           }
           local_labels.insert(val);
-        }else if(invector(j + one_based,additional_categorical_columns)){
+        }else if(invector(j + one_based,additional_categorical_columns) || invector(j - (int)vals.size(),additional_categorical_columns)){
           if(j >= local_val_map.size())
             local_val_map.resize(j + 1);
           local_val_map[j].insert(trim(vals[j]));
-        }else if(invector(j + one_based,additional_numeric_columns)){
+        }else if(invector(j + one_based,additional_numeric_columns) || invector(j - (int)vals.size(),additional_numeric_columns)){
           // do nothing;
         }else{
           auto val = trim(vals[j]);
@@ -1096,7 +1117,7 @@ void Data::cleanCSV(){
   int cnt_categorical = 0;
   std::vector<int> columns_map(data_header.n_feats);
   for(int i = 0;i < data_header.n_feats;++i){
-    if(invector(i + one_based,additional_categorical_columns)){
+    if(invector(i + one_based,additional_categorical_columns) || invector(i - (int)data_header.n_feats,additional_categorical_columns)){
       is_categorical[i] = true;
     }else if(val_map[i].size() > 0){
       if(val_map[i].size() + numeric_val_map[i].size() > category_limit){
@@ -1155,9 +1176,9 @@ void Data::cleanCSV(){
       double label = 0;
       std::vector<std::pair<int,double>> kv;
       for(int j = 0;j < vals.size();++j){
-        if(invector(j + one_based,ignore_columns)){
+        if(invector(j + one_based,ignore_columns) || invector(j - (int)vals.size(),ignore_columns)){
           continue;
-        }else if(j + one_based == label_column){
+        }else if(j + one_based == label_column || j - (int)vals.size() == label_column){
           auto val = trim(vals[j]);
           auto val2 = to_lower(val);
           if(missing_values.count(val2) != 0){
