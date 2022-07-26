@@ -1272,7 +1272,7 @@ void Data::cleanCSV(){
 }
 
 inline std::string Data::trim(const std::string& str){
-  const std::string whitespace = " \t";
+  const std::string whitespace = " \t\r\n";
   const auto begin = str.find_first_not_of(whitespace);
   if (begin == std::string::npos)
     return "";
