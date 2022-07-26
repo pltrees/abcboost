@@ -1007,7 +1007,12 @@ void Data::cleanCSV(){
         if(invector(j + one_based,ignore_columns)){
           continue;
         }else if(j + one_based == label_column){
-          local_labels.insert(trim(vals[j]));
+          auto val = trim(vals[j]);
+          auto val2 = to_lower(val);
+          if(missing_values.count(val2) != 0){
+            continue;
+          }
+          local_labels.insert(val);
         }else if(invector(j + one_based,additional_categorical_columns)){
           if(j >= local_val_map.size())
             local_val_map.resize(j + 1);
@@ -1136,10 +1141,16 @@ void Data::cleanCSV(){
       if(invector(j + one_based,ignore_columns)){
         continue;
       }else if(j + one_based == label_column){
+        auto val = trim(vals[j]);
+        auto val2 = to_lower(val);
+        if(missing_values.count(val2) != 0){
+          printf("[Warning] found missing label in row %d. Ignoring this row\n",i + one_based);
+          continue;
+        }
         if(numeric_labels)
-          label = stod(trim(vals[j]));
+          label = stod(val);
         else
-          label = label_map[trim(vals[j])];
+          label = label_map[val];
       }else{
         auto val = trim(vals[j]);
         auto val2 = to_lower(val);
