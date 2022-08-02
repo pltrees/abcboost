@@ -120,6 +120,13 @@ inline void serialize(FILE *fp, std::string &x) {
   fwrite(x.c_str(), size, 1, fp);
 }
 
+template <>
+inline void serialize(FILE *fp, const std::string &x) {
+  size_t size = x.length();
+  fwrite(&size, sizeof(size), 1, fp);
+  fwrite(x.c_str(), size, 1, fp);
+}
+
 inline std::string deserialize_str(FILE *fp) {
   std::string str;
   size_t size;

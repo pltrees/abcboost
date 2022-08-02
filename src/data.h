@@ -16,6 +16,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <set>
 
 #include "config.h"
 #include "utils.h"
@@ -128,7 +129,22 @@ class Data {
 
 	void constructAuxData();
 
+  // for cleaning:
   void cleanCSV();
+  void cleanCSVwithInfo();
+  void clean_one_file(std::string path,const std::vector<std::string>& buffer,int begin_line,int end_line,int one_based,std::vector<int>& ignore_rows,int& output_lines);
+  void serializeCleanInfo(FILE* fp);
+  void deserializeCleanInfo(FILE* fp);
+  std::vector<int> columns_map;
+  std::vector<char> is_categorical;
+  std::vector<int> ignore_columns;
+  std::unordered_map<std::string,int> label_map;
+  double missing_substitution;
+  std::set<std::string> missing_values;
+  bool numeric_labels = true;
+  std::vector<std::unordered_map<std::string,int>> category_map;
+  int output_columns = 0;
+  int label_column = 1;
 
  private:
   void adaptiveQuantization();

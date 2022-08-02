@@ -109,6 +109,7 @@ class Config {
   std::string missing_values = "ne,na,nan,none,null,unknown,,?";
   std::string missing_substitution = "0";
   std::string cleaned_format = "libsvm";
+  std::string clean_info = "";
 
   // Others
   bool save_log = true;
@@ -506,6 +507,8 @@ class Config {
         missing_substitution = value;
       } else if (key == "cleaned_format") {
         cleaned_format = value;
+      } else if (key == "cleaninfo") {
+        clean_info = value;
       } else
           // others
           if (key == "experiment_folder") {

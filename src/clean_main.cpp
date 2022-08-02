@@ -27,9 +27,21 @@ int main(int argc, char* argv[]) {
   config->model_mode = "clean";
   config->sanityCheck();
 
+
   std::unique_ptr<ABCBoost::Data> data =
       std::unique_ptr<ABCBoost::Data>(new ABCBoost::Data(config.get()));
-  data->cleanCSV();
+  if(config->clean_info == ""){
+    data->cleanCSV();
+  }else{
+    if (!data->doesFileExist(config->clean_info)) {
+      fprintf(stderr, "[ERROR] Specified cleaninfo file (%s) does not exist!\n",config->clean_info.c_str());
+      exit(1);
+    }
+    FILE* fp = fopen(config->clean_info.c_str(),"rb");
+    data->deserializeCleanInfo(fp);
+    fclose(fp);
+    data->cleanCSVwithInfo();
+  }
   return 0;
 }
 

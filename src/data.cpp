@@ -989,8 +989,8 @@ void Data::cleanCSV(){
 
   omp_set_num_threads(T);
   const int one_based = 1;
-  const int label_column = config->label_column;
-  const std::vector<int> ignore_columns = splitint(config->ignore_columns);
+  label_column = config->label_column;
+  ignore_columns = splitint(config->ignore_columns);
   std::vector<int> each_ignore_rows = splitint(config->ignore_rows);
   std::vector<int> ignore_rows;
   int left_bound = 0;
@@ -1016,7 +1016,7 @@ void Data::cleanCSV(){
   const std::vector<int> additional_categorical_columns = splitint(config->additional_categorical_columns);
   const std::vector<int> additional_numeric_columns = splitint(config->additional_numeric_columns);
   auto tmp = split(config->missing_values);
-  const std::set<std::string> missing_values(tmp.begin(),tmp.end());
+  missing_values = std::set<std::string>(tmp.begin(),tmp.end());
   const int category_limit = config->category_limit;
 
   std::vector<std::set<std::string>> global_labels(T);
@@ -1099,12 +1099,12 @@ void Data::cleanCSV(){
   std::vector<std::set<std::string>>& val_map = global_val_map[0];
   std::vector<std::set<std::string>>& numeric_val_map = global_numeric_val_map[0];
 
-  bool numeric_labels = true;
+  numeric_labels = true;
   for(const auto& p : labels){
     if(is_numeric(p) == false)
       numeric_labels = false;
   }
-  std::unordered_map<std::string,int> label_map;
+  label_map.clear();
   if(numeric_labels == false){
     int curr = 0;
     for(const auto& p : labels){
@@ -1112,23 +1112,23 @@ void Data::cleanCSV(){
       ++curr;
     }
   }
-  std::vector<bool> is_categorical(data_header.n_feats,false);
+  is_categorical = std::vector<char>(data_header.n_feats,0);
   int cnt_numeric = 0;
   int cnt_categorical = 0;
-  std::vector<int> columns_map(data_header.n_feats);
+  columns_map = std::vector<int>(data_header.n_feats);
   for(int i = 0;i < data_header.n_feats;++i){
     if(invector(i + one_based,additional_categorical_columns) || invector(i - (int)data_header.n_feats,additional_categorical_columns)){
-      is_categorical[i] = true;
+      is_categorical[i] = 1;
     }else if(val_map[i].size() > 0){
       if(val_map[i].size() + numeric_val_map[i].size() > category_limit){
         printf("[Warning] found a very large category in column %d, %zu unique non-numeric values, %zu+ unique numeric values. We will treat this column as numeric and regard all non-numeric ones as missing. You can specifiy this column in -additional_categorical_columns to make it all categorical\n",i + one_based,numeric_val_map[i].size(),val_map[i].size());
-        is_categorical[i] = false;
+        is_categorical[i] = 0;
       }else{
         val_map[i].insert(numeric_val_map[i].begin(),numeric_val_map[i].end());
-        is_categorical[i] = true;
+        is_categorical[i] = 1;
       }
     }else{
-      is_categorical[i] = false;
+      is_categorical[i] = 0;
     }
     if(is_categorical[i])
       ++cnt_categorical;
@@ -1137,8 +1137,8 @@ void Data::cleanCSV(){
   }
   int curr_categorical = 0;
   int curr_numeric = 0;
-  std::vector<std::unordered_map<std::string,int>> category_map(data_header.n_feats);
-  int output_columns = cnt_numeric;
+  category_map = std::vector<std::unordered_map<std::string,int>>(data_header.n_feats);
+  output_columns = cnt_numeric;
   for(int i = 0;i < data_header.n_feats;++i){
     if(is_categorical[i]){
       columns_map[i] = cnt_numeric + curr_categorical;
@@ -1156,97 +1156,12 @@ void Data::cleanCSV(){
     }
   }
 
-  const bool output_libsvm = (config->cleaned_format != "csv");
   int curr_line = 0;
   int output_lines = 0;
   for(int path_iter = 0;path_iter < all_files.size();++path_iter){
     auto path = all_files[path_iter];
-    std::string output_path = "";
-    if(output_libsvm)
-      output_path = path + "_cleaned.libsvm";
-    else
-      output_path = path + "_cleaned.csv";
-    FILE* fp = fopen(output_path.c_str(),"w");
-
-    double missing_substitution = stod(config->missing_substitution);
-    for(int i = curr_line;i < lines_offset[path_iter];++i){
-      if(invector(i + one_based,ignore_rows))
-        continue;
-      const std::vector<std::string> vals = split(buffer[i]);
-      double label = 0;
-      std::vector<std::pair<int,double>> kv;
-      for(int j = 0;j < vals.size();++j){
-        if(invector(j + one_based,ignore_columns) || invector(j - (int)vals.size(),ignore_columns)){
-          continue;
-        }else if(j + one_based == label_column || j - (int)vals.size() == label_column){
-          auto val = trim(vals[j]);
-          auto val2 = to_lower(val);
-          if(missing_values.count(val2) != 0){
-            printf("[Warning] found missing label in row %d. Ignoring this row\n",i + one_based);
-            continue;
-          }
-          if(numeric_labels)
-            label = stod(val);
-          else
-            label = label_map[val];
-        }else{
-          auto val = trim(vals[j]);
-          auto val2 = to_lower(val);
-          bool is_missing = (missing_values.count(val2) != 0);
-          int idx = columns_map[j];
-          double v = 1;
-          int offset = 0;
-          if(is_categorical[j]){
-            if(is_missing){
-              offset = 0;
-            }else{
-              auto it = category_map[j].find(val);
-              if(it == category_map[j].end()){
-                printf("[Warning] found unknown category (%s) in column %d, mapping it as 0\n",val.c_str(),j + one_based);
-                offset = 0;
-              }else{
-                offset = it->second;
-              }
-            }
-          }else{
-            if(is_missing){
-              v = missing_substitution;
-            }else{
-              try{
-                v = stod(val);
-              }catch(...){
-                v = missing_substitution;
-              }
-            }
-          }
-          kv.push_back(std::make_pair(idx + offset,v));
-        }
-      }
-      std::sort(kv.begin(),kv.end());
-      if(output_libsvm){
-        fprintf(fp,"%g",label);
-        for(const auto& p : kv){
-          if(p.second != 0)
-            fprintf(fp," %d:%g",p.first + 1,p.second);
-        }
-        fprintf(fp,"\n");
-      }else{
-        fprintf(fp,"%g",label);
-        int p = 0;
-        for(int i = 0;i < output_columns;++i){
-          if(p < kv.size() && kv[p].first == i){
-            fprintf(fp,",%g",kv[p].second);
-            ++p;
-          }else{
-            fprintf(fp,",%g",missing_substitution);
-          }
-        }
-        fprintf(fp,"\n");
-      }
-      ++output_lines;
-    }
+    clean_one_file(path,buffer,curr_line,lines_offset[path_iter],one_based,ignore_rows,output_lines);
     curr_line = lines_offset[path_iter];
-    fclose(fp);
   }
 
   if(cnt_categorical > 0){
@@ -1269,6 +1184,250 @@ void Data::cleanCSV(){
     printf("\n");
   }
   printf("Cleaning summary: | # data: %d | # numeric features %d | # categorical features: %d | # converted features: %d | # classes: %zu\n", output_lines, cnt_numeric, cnt_categorical, output_columns, labels.size());
+
+  std::string clean_info_path = all_files[0] + ".cleaninfo";
+  FILE* fp = fopen(clean_info_path.c_str(),"wb");
+  serializeCleanInfo(fp);
+  fclose(fp);
+}
+
+void Data::cleanCSVwithInfo(){
+  const std::string path = config->data_path;
+  if (!doesFileExist(path) && config->from_wrapper == false) {
+    fprintf(stderr, "[ERROR] Data file does not exist!\n");
+    exit(1);
+  }
+  std::vector<std::string> all_files = split(config->additional_files);
+  for(auto p : all_files){
+    if (!doesFileExist(p)) {
+      fprintf(stderr, "[ERROR] Data file does not exist!\n");
+      exit(1);
+    }
+  }
+  all_files.insert(all_files.begin(),path);
+  
+
+  std::vector<std::string> buffer;
+  std::vector<int> lines_offset;
+
+  for(auto path : all_files){
+    std::ifstream infile(path);
+    std::string line;
+    while (getline(infile, line)) {
+      buffer.push_back(line);
+    }
+    lines_offset.push_back(buffer.size());
+  }
+
+  int T = 1;
+#pragma omp parallel
+#pragma omp master
+  {
+    T = config->n_threads;  // omp_get_num_threads();
+  }
+  omp_set_num_threads(T);
+  int n_lines = buffer.size();
+  int step = (n_lines + T - 1) / T;
+
+  std::vector<std::vector<std::vector<unsigned int>>> i_global;
+  std::vector<std::vector<std::vector<double>>> v_global;
+  std::vector<std::vector<double>> Y_global;
+  std::vector<unsigned int> n_feat_global;
+  i_global.resize(T);
+  v_global.resize(T);
+  Y_global.resize(T);
+  n_feat_global.resize(T);
+
+  omp_set_num_threads(T);
+  const int one_based = 1;
+  std::vector<int> each_ignore_rows = splitint(config->ignore_rows);
+  std::vector<int> ignore_rows;
+  int left_bound = 0;
+  for(int i = 0;i < lines_offset.size();++i){
+    for(auto p : each_ignore_rows){
+      if(p != 0){
+        int goal = 0;
+        if(p > 0){
+          goal = left_bound + p - one_based;
+        }else{
+          goal = lines_offset[i] + p;
+        }
+        if(goal >= left_bound &&  goal < lines_offset[i])
+          ignore_rows.push_back(goal + one_based);
+        else
+          printf("[Warning] no row %d for %s. Ignoring.\n",p,all_files[i].c_str());
+      }else{
+        printf("[Warning] ignore_rows index should not be 0\n");
+      }
+    }
+    left_bound = lines_offset[i];
+  }
+
+  int curr_line = 0;
+  int output_lines = 0;
+  for(int path_iter = 0;path_iter < all_files.size();++path_iter){
+    auto path = all_files[path_iter];
+    clean_one_file(path,buffer,curr_line,lines_offset[path_iter],one_based,ignore_rows,output_lines);
+    curr_line = lines_offset[path_iter];
+  }
+
+  printf("Cleaning summary: | # data: %d | # converted features: %d\n", output_lines, output_columns);
+}
+
+void Data::clean_one_file(std::string path,const std::vector<std::string>& buffer,int begin_line,int end_line,int one_based,std::vector<int>& ignore_rows,int& output_lines){
+  const bool output_libsvm = (config->cleaned_format != "csv");
+  std::string output_path = "";
+  if(output_libsvm)
+    output_path = path + "_cleaned.libsvm";
+  else
+    output_path = path + "_cleaned.csv";
+  FILE* fp = fopen(output_path.c_str(),"w");
+
+  missing_substitution = stod(config->missing_substitution);
+  for(int i = begin_line;i < end_line;++i){
+    if(invector(i + one_based,ignore_rows))
+      continue;
+    const std::vector<std::string> vals = split(buffer[i]);
+    double label = 0;
+    std::vector<std::pair<int,double>> kv;
+    for(int j = 0;j < vals.size();++j){
+      if(invector(j + one_based,ignore_columns) || invector(j - (int)vals.size(),ignore_columns)){
+        continue;
+      }else if(j + one_based == label_column || j - (int)vals.size() == label_column){
+        auto val = trim(vals[j]);
+        auto val2 = to_lower(val);
+        if(missing_values.count(val2) != 0){
+          printf("[Warning] found missing label in row %d. Ignoring this row\n",i + one_based);
+          continue;
+        }
+        if(numeric_labels)
+          label = stod(val);
+        else
+          label = label_map[val];
+      }else{
+        auto val = trim(vals[j]);
+        auto val2 = to_lower(val);
+        bool is_missing = (missing_values.count(val2) != 0);
+        int idx = columns_map[j];
+        double v = 1;
+        int offset = 0;
+        if(is_categorical[j]){
+          if(is_missing){
+            offset = 0;
+          }else{
+            auto it = category_map[j].find(val);
+            if(it == category_map[j].end()){
+              printf("[Warning] found unknown category (%s) in column %d, mapping it as 0\n",val.c_str(),j + one_based);
+              offset = 0;
+            }else{
+              offset = it->second;
+            }
+          }
+        }else{
+          if(is_missing){
+            v = missing_substitution;
+          }else{
+            try{
+              v = stod(val);
+            }catch(...){
+              v = missing_substitution;
+            }
+          }
+        }
+        kv.push_back(std::make_pair(idx + offset,v));
+      }
+    }
+    std::sort(kv.begin(),kv.end());
+    if(output_libsvm){
+      fprintf(fp,"%g",label);
+      for(const auto& p : kv){
+        if(p.second != 0)
+          fprintf(fp," %d:%g",p.first + 1,p.second);
+      }
+      fprintf(fp,"\n");
+    }else{
+      fprintf(fp,"%g",label);
+      int p = 0;
+      for(int i = 0;i < output_columns;++i){
+        if(p < kv.size() && kv[p].first == i){
+          fprintf(fp,",%g",kv[p].second);
+          ++p;
+        }else{
+          fprintf(fp,",%g",missing_substitution);
+        }
+      }
+      fprintf(fp,"\n");
+    }
+    ++output_lines;
+  }
+  fclose(fp);
+}
+
+void Data::serializeCleanInfo(FILE* fp){
+  Utils::serialize_vector(fp,columns_map);
+  Utils::serialize_vector(fp,is_categorical);
+  Utils::serialize_vector(fp,ignore_columns);
+
+  int label_size = label_map.size();
+  fwrite(&label_size,sizeof(int),1,fp);
+  for(auto p : label_map){
+    Utils::serialize(fp,p.first);
+    fwrite(&p.second,sizeof(int),1,fp);
+  }
+
+  fwrite(&missing_substitution, sizeof(double), 1, fp);
+  Utils::serialize(fp,config->missing_values);
+  fwrite(&numeric_labels, sizeof(bool), 1, fp);
+  int size = category_map.size();
+  fwrite(&size,sizeof(int),1,fp);
+  for(int i = 0;i < category_map.size();++i){
+    int size_map = category_map[i].size();
+    fwrite(&size_map,sizeof(int),1,fp);
+    for(auto p : category_map[i]){
+      Utils::serialize(fp,p.first);
+      fwrite(&p.second,sizeof(int),1,fp);
+    }
+  }
+  fwrite(&output_columns, sizeof(int), 1, fp);
+  fwrite(&label_column, sizeof(int), 1, fp);
+}
+
+void Data::deserializeCleanInfo(FILE* fp){
+  columns_map = Utils::deserialize_vector<int>(fp);
+  is_categorical = Utils::deserialize_vector<char>(fp);
+  ignore_columns = Utils::deserialize_vector<int>(fp);
+
+
+  int label_size = 0;
+  fread(&label_size,sizeof(int),1,fp);
+  for(int i = 0;i < label_size;++i){
+    std::string key = Utils::deserialize_str(fp);
+    int val = 0;
+    fread(&val,sizeof(int),1,fp);
+    label_map[key] = val;
+  }
+
+  fread(&missing_substitution, sizeof(double), 1, fp);
+  std::string tmpstr = Utils::deserialize_str(fp);
+  auto tmp = split(tmpstr);
+  missing_values = std::set<std::string>(tmp.begin(),tmp.end());
+  fread(&numeric_labels, sizeof(bool), 1, fp);
+
+  int size = 0;
+  fread(&size,sizeof(int),1,fp);
+  category_map = std::vector<std::unordered_map<std::string,int>>(size);
+  for(int i = 0;i < size;++i){
+    int size_map = 0;
+    fread(&size_map,sizeof(int),1,fp);
+    for(int j = 0;j < size_map;++j){
+      std::string key = Utils::deserialize_str(fp);
+      int val = 0;
+      fread(&val,sizeof(int),1,fp);
+      category_map[i][key] = val;
+    }
+  }
+  fread(&output_columns, sizeof(int), 1, fp);
+  fread(&label_column, sizeof(int), 1, fp);
 }
 
 inline std::string Data::trim(const std::string& str){
