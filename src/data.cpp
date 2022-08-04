@@ -279,8 +279,12 @@ void Data::loadDataHeader(FILE* fileptr) {
 std::vector<std::string> Data::split(const std::string& s, char delimiter) {
   std::vector<std::string> ret;
   std::string now = "";
+  char quote = '"';
+  bool in_quote = false;
   for (const auto& ch : s) {
-    if (ch == delimiter) {
+    if (ch == quote){
+      in_quote = !in_quote;
+    }else if (ch == delimiter && in_quote == false) {
       ret.push_back(now);
       now = "";
     } else {
