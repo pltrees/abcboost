@@ -14,9 +14,10 @@ cmake ..
 make
 cd ..
 ```
-This will create two executables (`abcboost_train` and `abcboost_predict`) in the `abcboost` directory.
+This will create three executables (`abcboost_train`, `abcboost_predict`, and `abcboost_clean`) in the `abcboost` directory.
 `abcboost_train` is the executable to train models.
 `abcboost_predict` is the executable to validate and inference using trained models.
+`abcboost_clean` is the executable to clean csv data.
 
 The default setting builds ABCBoost as a single-thread program.  To build ABCBoost with multi-thread support [OpenMP](https://en.wikipedia.org/wiki/OpenMP) (OpenMP comes with the system GCC toolchains on Linux), turn on the multi-thread option:
 ```
@@ -152,7 +153,6 @@ To train the model with 2000 iterations, 16 leaves per tree, 0.08 learning rate 
 Note that the exhaustive searching produces better-generalized model while requiring substantially more time. For the `covtype` dataset (which has 7 classes), using `-search 0` is effectively equivalent to `-search 7`. 
 
 The labels in the specified additional files are not used in the training. Only the feature values are used to generate (potentially) better quantization. Better testing results may be obtained when using additional files
-
 
 
 ## More Configuration Options:
@@ -366,6 +366,20 @@ model = abcboost.train(Y,X,'abcrobustlogit',100,20,0.1)
 res = abcboost.test(testY,testX,model)
 ```
 
+# Cleaning Options
+We provide an executable `abcboost_clean` for cleaning CSV files and detecting categorical feature. The categorical features will be encoded into one-hot representation.
+* `-data` the data file to clean
+* `-ignore_columns` the columns to ignore in the CSV file. Multiple columns can be separated by commas, e.g., `-ignore_columns 1,3,-2,-1` ignores the first, third, and the last two columns. The index is one-based. There should be no space between the comma and the column indices
+* `-ignore_rows` the rows to ignore in the CSV file. Multiple rows can be separarated by commas
+* `-label_column` (default 1) the column contains the label
+* `-category_limit` (default 10000) the limit of the categories in a feature. In the auto detection, we will consider the column as a numeric column and treat non-numeric values as missing if the detected categories in the feature exceed this limit. We can specify the `-additional_categorical_columns` to bypass this limit
+* `-additional_categorical_columns` specifies additional categorical columns (it will override the auto categorical feature detection result)
+* `-additional_numeric_columns` specifies additional numeric columns (it will override the auto categorical feature detection result). All non-numeric values in those columns will be considered as missing
+* `-missing_values` (default ne,na,nan,none,null,unknown,,?) specifies the possible missing values (case-insensitive).
+* `-missing_substitution` (default 0) we will subsitute all missing values with this specified number
+* `-cleaned_format` default(libsvm) the output format of the cleaned data. It can be specified to csv or libsvm. We suggest to use libsvm for a compact representation of the one-hot encoded categorical values.
+* `-cleaninfo` specifies the `.cleaninfo` file. If this is unspecified. We will generate a file with a `.cleaninfo` suffix that contains the cleaning information, e.g., label columns, categorical mapping, etc. Specifying `-cleaninfo` enables us to clean other data with the same mapping of the previous cleaning. For example, we clean the training data first. And later we can use the `.cleaninfo` of the training data to clean the testing data to ensure they have the same feature mapping. Note that the `-ignore_rows` is not saved in the `.cleaninfo`.
+* `-additional_files` the additional files to clean together with the `-data`. For example, we may clean the training, testing, validating dataset together by specifying the training data in `-data`, testing and validating data in the additional_files (file names are separated by comma with no space).
 
 ## References
 * Ping Li. [ABC-Boost: Adaptive Base Class Boost for Multi-Class Classification](https://icml.cc/Conferences/2009/papers/417.pdf). ICML 2009.
