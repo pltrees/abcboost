@@ -124,7 +124,7 @@ class Config {
   bool test_auc = false;
   double default_label = 0;
   double stop_tolerance = 2e-14;
-  double regression_stop_factor = 1e-5;
+  double regression_stop_factor = 1e-6;
   double gbrank_tau = 0.1;
   double gbrank_update_factor = 100;
   std::string map_dump_format = "";

@@ -1,6 +1,6 @@
 # ABCBoost
 
-This toolkit consists of ABCBoost, a concrete implementation of [Fast ABCBoost](https://arxiv.org/pdf/2205.10927.pdf) (Fast Adaptive Base Class Boost). 
+This toolkit consists of ABCBoost, the implementation of [Fast ABCBoost](https://arxiv.org/pdf/2205.10927.pdf) (Fast Adaptive Base Class Boost). 
 
 ## Quick Start
 ### Installation guide
@@ -49,7 +49,7 @@ make
 
 Four datasets are provided under `data/' folder: 
 
-[comp_cpu](http://www.cs.toronto.edu/~delve/data/comp-activ/desc.html) for regression, in both CSV  and LIBSVM formats: `comp_cpu.train.libsvm`, `comp_cpu.train.csv`, `comp_cpu.test.libsvm`, `comp_cpu.test.csv`. Note that other tree platforms may not support the CSV format. 
+[comp_cpu](http://www.cs.toronto.edu/~delve/data/comp-activ/desc.html) for regression, in both CSV  and libsvm formats: `comp_cpu.train.libsvm`, `comp_cpu.train.csv`, `comp_cpu.test.libsvm`, `comp_cpu.test.csv`. Note that other tree platforms may not support the CSV format. 
 
 [ijcnn1](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html#ijcnn1) for binary classification. 
 
@@ -366,17 +366,46 @@ model = abcboost.train(Y,X,'abcrobustlogit',100,20,0.1)
 res = abcboost.test(testY,testX,model)
 ```
 
-# Cleaning Options
-We provide an executable `abcboost_clean` for cleaning CSV files and detecting categorical feature. The categorical features will be encoded into one-hot representation.
+## Data Cleaning and Categorical Feature Processing
+
+We provide an executable `abcboost_clean` for cleaning CSV files and detecting categorical feature. The categorical features will be encoded into one-hot representations and placed after the numerical features. The processed dataset will be stored by (by default) in the libsvm format but users also choose to specify the CSV format. 
+
+We provide an illustrative example: [Census-Income (KDD) Data Set](https://archive.ics.uci.edu/ml/machine-learning-databases/census-income-mld/). First of all, the binary labels are `- 50000`  and  `50000+` in the last column, which will be converted to respectively `0` and `1` and be placed in the first column of the processed dataset. This dataset contains missing values and many categorical features represented by strings. Interestingly, on this dataset `Census-Income (KDD) Data Set`, we notice that `MART` slightly outperforms `Robust LogitBoost`. 
+
+
+Executing the following terminal command will generate cleaned `csv` files for both training data `census-income.data` and testing data `census-income.test`: 
+```
+./abcboost_clean -data data/census-income.data -label_column -1 -cleaned_format csv -additional_files data/census-income.test
+```
+`-label_column -1` indicate the `last` column is for the labels.  We can replace `csv` by `libsvm` if we hope to store the data in a different format. The default choice is `libsvm`.  The following is the end of the output of the above command: 
+
+```
+Found non-numeric labels:
+(50000+.)->1 (- 50000.)->0
+Cleaning summary: | # data: 299285 | # numeric features 14 | # categorical features: 28 | # converted features: 401 | # classes: 2
+```
+
+In the above command, `-additional_files data/census-income.test` indicates that `census-income.data` and `census-income.test` will be internally combined as one file to process categorical features. Alternatively, we can also first clean `census-income.data` and then use the information stored in `census-income.data.cleaninfo` to separately process `census-income.test`: 
+
+```
+./abcboost_clean -data data/census-income.data -label_column -1
+./abcboost_clean -data data/census-income.test -cleaninfo data/census-income.data.cleaninfo -cleaned_format csv 
+```
+Note that the above two ways may not necessarily generate the same results because the additional files may contain additional categories. In this particular example, one can check that the results are the same.  
+
+
+In summary, `abcboost_clean` is fairly powerful with many functionalities. In the  following, we list the options and explanations. 
+
+
 * `-data` the data file to clean
-* `-ignore_columns` the columns to ignore in the CSV file. Multiple columns can be separated by commas, e.g., `-ignore_columns 1,3,-2,-1` ignores the first, third, and the last two columns. The index is one-based. There should be no space between the comma and the column indices
-* `-ignore_rows` the rows to ignore in the CSV file. Multiple rows can be separarated by commas
+* `-ignore_columns` the columns to ignore in the CSV file. Multiple columns can be separated by commas, e.g., `-ignore_columns 1,3,-2` ignores the first, third, and the second last columns. The index is one-based. There should be no space between the comma and the column indices
+* `-ignore_rows` the rows to ignore in the CSV file. Multiple rows can be separated by commas
 * `-label_column` (default 1) the column contains the label
 * `-category_limit` (default 10000) the limit of the categories in a feature. In the auto detection, we will consider the column as a numeric column and treat non-numeric values as missing if the detected categories in the feature exceed this limit. We can specify the `-additional_categorical_columns` to bypass this limit
 * `-additional_categorical_columns` specifies additional categorical columns (it will override the auto categorical feature detection result)
 * `-additional_numeric_columns` specifies additional numeric columns (it will override the auto categorical feature detection result). All non-numeric values in those columns will be considered as missing
 * `-missing_values` (default ne,na,nan,none,null,unknown,,?) specifies the possible missing values (case-insensitive).
-* `-missing_substitution` (default 0) we will subsitute all missing values with this specified number
+* `-missing_substitution` (default 0) we will substitute all missing values with this specified number
 * `-cleaned_format` default(libsvm) the output format of the cleaned data. It can be specified to csv or libsvm. We suggest to use libsvm for a compact representation of the one-hot encoded categorical values.
 * `-cleaninfo` specifies the `.cleaninfo` file. If this is unspecified. We will generate a file with a `.cleaninfo` suffix that contains the cleaning information, e.g., label columns, categorical mapping, etc. Specifying `-cleaninfo` enables us to clean other data with the same mapping of the previous cleaning. For example, we clean the training data first. And later we can use the `.cleaninfo` of the training data to clean the testing data to ensure they have the same feature mapping. Note that the `-ignore_rows` is not saved in the `.cleaninfo`.
 * `-additional_files` the additional files to clean together with the `-data`. For example, we may clean the training, testing, validating dataset together by specifying the training data in `-data`, testing and validating data in the additional_files (file names are separated by comma with no space).

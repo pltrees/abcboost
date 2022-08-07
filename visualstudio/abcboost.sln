@@ -3,12 +3,18 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Blend for Visual Studio Version 17
 VisualStudioVersion = 17.2.32616.157
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "predict", "predict.vcxproj", "{1866AA30-E3BF-4F74-B37D-9C2E379C147D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "abcboost_predict", "predict.vcxproj", "{1866AA30-E3BF-4F74-B37D-9C2E379C147D}"
 	ProjectSection(ProjectDependencies) = postProject
 		{0D3F0597-BCE6-44C3-84C5-F2873AF0167C} = {0D3F0597-BCE6-44C3-84C5-F2873AF0167C}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "train", "train.vcxproj", "{0D3F0597-BCE6-44C3-84C5-F2873AF0167C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "abcboost_train", "train.vcxproj", "{0D3F0597-BCE6-44C3-84C5-F2873AF0167C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "abcboost_clean", "clean.vcxproj", "{DA9A11B7-D2DD-49AE-920D-162AD265CB4A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0D3F0597-BCE6-44C3-84C5-F2873AF0167C} = {0D3F0597-BCE6-44C3-84C5-F2873AF0167C}
+		{1866AA30-E3BF-4F74-B37D-9C2E379C147D} = {1866AA30-E3BF-4F74-B37D-9C2E379C147D}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -34,6 +40,14 @@ Global
 		{0D3F0597-BCE6-44C3-84C5-F2873AF0167C}.Release|x64.Build.0 = Release|x64
 		{0D3F0597-BCE6-44C3-84C5-F2873AF0167C}.Release|x86.ActiveCfg = Release|Win32
 		{0D3F0597-BCE6-44C3-84C5-F2873AF0167C}.Release|x86.Build.0 = Release|Win32
+		{DA9A11B7-D2DD-49AE-920D-162AD265CB4A}.Debug|x64.ActiveCfg = Debug|x64
+		{DA9A11B7-D2DD-49AE-920D-162AD265CB4A}.Debug|x64.Build.0 = Debug|x64
+		{DA9A11B7-D2DD-49AE-920D-162AD265CB4A}.Debug|x86.ActiveCfg = Debug|Win32
+		{DA9A11B7-D2DD-49AE-920D-162AD265CB4A}.Debug|x86.Build.0 = Debug|Win32
+		{DA9A11B7-D2DD-49AE-920D-162AD265CB4A}.Release|x64.ActiveCfg = Release|x64
+		{DA9A11B7-D2DD-49AE-920D-162AD265CB4A}.Release|x64.Build.0 = Release|x64
+		{DA9A11B7-D2DD-49AE-920D-162AD265CB4A}.Release|x86.ActiveCfg = Release|Win32
+		{DA9A11B7-D2DD-49AE-920D-162AD265CB4A}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
