@@ -1,4 +1,6 @@
-# ABCBoost
+English | [中文文档](./README_Chinese.md)
+
+# ABCBoost 
 
 This toolkit consists of ABCBoost, the implementation of [Fast ABCBoost](https://arxiv.org/pdf/2205.10927.pdf) (Fast Adaptive Base Class Boost). 
 
@@ -47,7 +49,7 @@ make
 
 ### Datasets 
 
-Four datasets are provided under `data/' folder: 
+Four datasets are provided under `data/` folder: 
 
 [comp_cpu](http://www.cs.toronto.edu/~delve/data/comp-activ/desc.html) for regression, in both CSV  and libsvm formats: `comp_cpu.train.libsvm`, `comp_cpu.train.csv`, `comp_cpu.test.libsvm`, `comp_cpu.test.csv`. Note that other tree platforms may not support the CSV format. 
 
@@ -68,7 +70,7 @@ This will generate a model named `comp_cpu.train.libsvm_regression_J10_v0.1_p2.m
 ```
 ./abcboost_predict -data data/comp_cpu.test.csv -model comp_cpu.train.csv_regression_J20_v0.1_p2.model 
 ```
-which outputs two files: (1)  `comp_cpu.test.csv_regression_J20_v0.1_p2.testlog` which stores the history of test L2 loss and Lp loss (unless p=2) for all the iterations; and (2) `comp_cpu.test.csv_regression_J20_v0.1_p2.prediction` which stores the predictions for all testing data points.  
+which outputs two files: (1)  `comp_cpu.test.csv_regression_J20_v0.1_p2.testlog` which stores the history of test L1 and L2 loss for all the iterations; and (2) `comp_cpu.test.csv_regression_J20_v0.1_p2.prediction` which stores the predictions for all testing data points.  
 
 
 
@@ -84,7 +86,7 @@ Users can replace `robustlogit` by `mart` to test different algorithms.
 
 ### Multi-Class Classification (Aaptive Base Class Robust LogitBoost) 
 
-We support four training methods: `robustlogit`,  `abcrobustlogit`, `mart`, and `abcmart`. The following example is for `abcrobustlogit` on `covtype` dataset which has `7` classes. In order to identify the `base class`, we need to specify the `-search` parameter (between 1 and 7 for this dataset) and `-gap` parameter (`5` by default) : 
+We support four training methods: `robustlogit`,  `abcrobustlogit`, `mart`, and `abcmart`. The following example is for `abcrobustlogit` on `covtype` dataset which has `7` classes. In order to identify the `base class`, we need to specify the `-search` parameter (between 1 and 7 for this dataset) and `-gap` parameter (`5` by default): 
 ```
 ./abcboost_train -method abcrobustlogit -data data/covtype.train.csv -J 20 -v 0.1 -iter 1000 -search 2 -gap 10
 ./abcboost_predict -data data/covtype.test.csv -model covtype.train.csv_abcrobustlogit2g10_J20_v0.1_w0.model 
@@ -136,7 +138,7 @@ Here we illustrate some common parameters and provide some examples:
 * `-iter` number of iterations (default 1000)
 * `-J` number of leaves in a tree (default 20)
 * `-v` learning rate (default 0.1)
-* `-search` searching size for the base class (default 1: we greedily choose the base classes according to the training loss). For example, 2 means we try the class with the greatest loss and the class with the second greatest loss as base class and pick the one with lower loss as the base class for the current iteration.
+* `-search` searching size for the base class (default 2: we greedily choose the base classes according to the training loss). For example, 2 means we try the class with the greatest loss and the class with the second greatest loss as base class and pick the one with lower loss as the base class for the current iteration.
 * `-n_threads` number of threads (default 1) <strong>It can only be used when multi-thread is enabled. (Compile the code with `-DOMP=ON` in cmake.)</strong>
 * `-additional_files` using other files to do bin quantization besides the training data. File names are separated by `,` without additional spaces, e.g., `-additional_files file1,file2,file3`.
 * `-additional_files_no_label` using other unlabeled files to do bin quantization besides the training data. File names are separated by `,` without additional spaces, e.g., `-additional_files_no_label file1,file2,file3`.
@@ -164,7 +166,7 @@ The labels in the specified additional files are not used in the training. Only 
 * `-data_path, -data` path to train/test data
 #### Tree related:
 * `-tree_clip_value` gradient clip (default 50)
-* `-tree_damping_factor`, regularization on numerator (default 1e-100)
+* `-tree_damping_factor`, regularization on denominator (default 1e-100)
 * `-tree_max_n_leaves`, -J (default 20)
 * `-tree_min_node_size` (default 10)
 #### Model related:
@@ -180,7 +182,7 @@ The labels in the specified additional files are not used in the training. Only 
 #### Adaptive Base Class (ABC) related:
 * `-model_base_candidate_size`, `base_candidates_size`, `-search` (default 2) base class searching size in abcmart/abcrobustlogit
 * `-model_gap`, `-gap` (default 5) the gap between two base class searchings. For example, `-model_gap 2` means we will do the base class searching in iteration 1, 4, 6, ...
-* `-model_warmup_iter`, `-warmup_iter` (default 0) the number of iterations that use normal boosting before ABC method kicks in. It might be helpful for datasets with a large number of classes when we only have a limited base class searching parameter (`-model_base_candidate_size`) 
+* `-model_warmup_iter`, `-warmup_iter` (default 0) the number of iterations that use normal boosting before ABC method kicks in. It might be helpful for datasets with a large number of classes when we only have a limited base class searching parameter (`-search`) 
 * `-model_warmup_use_logit`, `-warmup_use_logit` 0/1 (default 1) whether use logitboost in warmup iterations.
 * `-model_abc_sample_rate`, `-abc_sample_rate` (default 1.0) the sample rate used for the base class searching
 * `-model_abc_sample_min_data` `-abc_sample_min_data` (default 2000) the minimum sampled data for base class selection. This parameter only takes into effect when `-abc_sample_rate` is less than `1.0`
@@ -199,7 +201,7 @@ The labels in the specified additional files are not used in the training. Only 
 * `-no_label`, 0/1 (default 0) It should only be enabled to output prediction file when the testing data has no label in test
 * `-test_auc`, 0/1 (default 0) whether compute AUC in test
 * `-stop_tolerance` (default 2e-14) It works for all non-regression tasks, e.g., classification. The training will stop when the total training loss is less than the stop tolerance.
-* `-regression_stop_factor` (default 1e-5) The auto stopping criterion is different from the classification task because the scale of the regression target is unknown. We adaptively set the regression stop tolerate to `regression_stop_factor * total_loss / sum(y^p)`, where `y` is the regression targets and `p` is the value specified in `-regression_lp_loss`.
+* `-regression_stop_factor` (default 1e-6) The auto stopping criterion is different from the classification task because the scale of the regression target is unknown. We adaptively set the regression stop tolerate to `regression_stop_factor * total_loss / sum(y^p)`, where `y` is the regression targets and `p` is the value specified in `-regression_lp_loss`.
 * `-regression_auto_clip_value` 0/1 (default 1) whether use our adaptive clipping value computation for the predict value on terminal nodes. When enabled, the adaptive clipping value is computed as `tree_clip_value * max_y - min_y` where `tree_clip_value` is set via `-tree_clip_value`, `max_y` and `min_y` are the maximum and minimum regression target value, respectively.
 * `-gbrank_tau` (default 0.1) The tau parameter for gbrank.
 
@@ -331,7 +333,7 @@ Analogously, there are two folders for Mac: `python/mac_m1`, `python/mac_x86`.
 
 For windows, we provide the shared (python3.10) library `abcboost.pyd` under `python/windows`. 
 
-Make sure `abcboost.so` is in the current directory.
+Make sure `abcboost.so` (or `abcboost.pyd` for Windows) is in the current directory.
 Paste the following code in a `python3` interactive shell:
 ```
 import numpy as np
@@ -406,7 +408,7 @@ In summary, `abcboost_clean` is fairly powerful with many functionalities. In th
 * `-additional_numeric_columns` specifies additional numeric columns (it will override the auto categorical feature detection result). All non-numeric values in those columns will be considered as missing
 * `-missing_values` (default ne,na,nan,none,null,unknown,,?) specifies the possible missing values (case-insensitive).
 * `-missing_substitution` (default 0) we will substitute all missing values with this specified number
-* `-cleaned_format` default(libsvm) the output format of the cleaned data. It can be specified to csv or libsvm. We suggest to use libsvm for a compact representation of the one-hot encoded categorical values.
+* `-cleaned_format` (default libsvm) the output format of the cleaned data. It can be specified to csv or libsvm. We suggest to use libsvm for a compact representation of the one-hot encoded categorical values.
 * `-cleaninfo` specifies the `.cleaninfo` file. If this is unspecified. We will generate a file with a `.cleaninfo` suffix that contains the cleaning information, e.g., label columns, categorical mapping, etc. Specifying `-cleaninfo` enables us to clean other data with the same mapping of the previous cleaning. For example, we clean the training data first. And later we can use the `.cleaninfo` of the training data to clean the testing data to ensure they have the same feature mapping. Note that the `-ignore_rows` is not saved in the `.cleaninfo`.
 * `-additional_files` the additional files to clean together with the `-data`. For example, we may clean the training, testing, validating dataset together by specifying the training data in `-data`, testing and validating data in the additional_files (file names are separated by comma with no space).
 
