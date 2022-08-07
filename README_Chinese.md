@@ -49,7 +49,7 @@ make
 
 ### 数据集
 
-我们在`data/`目录下提供了四个数据集: 
+我们在`data/`目录下提供了五个数据集: 
 
 [comp_cpu](http://www.cs.toronto.edu/~delve/data/comp-activ/desc.html) 用于回归模型。我们提供了两种格式，CSV和libsvm: `comp_cpu.train.libsvm`, `comp_cpu.train.csv`, `comp_cpu.test.libsvm`, `comp_cpu.test.csv`。请注意，其他树平台可能不支持CSV格式。 
 
@@ -58,6 +58,8 @@ make
 [covtype](https://archive.ics.uci.edu/ml/datasets/covertype)用于多分类问题。请注意，ABCBoost包不要求类的标签从`0`开始，而其他平台可能有这样的要求。
 
 [mslr10k](https://www.microsoft.com/en-us/research/project/mslr/)用于排序问题。这里只提供了源数据的一小部分样本。 
+
+[Census-Income (KDD) Data Set](https://archive.ics.uci.edu/ml/machine-learning-databases/census-income-mld/) 用于说明数据清理。
 
 
 ### Lp回归
@@ -91,7 +93,7 @@ make
 ./abcboost_train -method abcrobustlogit -data data/covtype.train.csv -J 20 -v 0.1 -iter 1000 -search 2 -gap 10
 ./abcboost_predict -data data/covtype.test.csv -model covtype.train.csv_abcrobustlogit2g10_J20_v0.1_w0.model 
 ```
-在本例中，模型文件名中的`_w0`我们默认将`-warmup_iter`参数设置为0。特别地，如果将`-search`参数设为`0`，则采取`穷举`策略(等价于在这个数据集中使用`-search 7`)。我们用这个设计来方便用户，使得用户不必知道数据集中类的个数。 
+在本例中，模型文件名中的`_w0`我们默认将`-warmup_iter`参数设置为0。 如果将`-search`参数设为`0`，则采取`穷举`策略(等价于在这个数据集中使用`-search 7`)。我们用这个设计来方便用户，使得用户不必知道数据集中类的个数。 
 
 
 在实际应用中，测试数据往往没有类标签。以下示例用于预测没有类标签的数据，并且只输出预测的类: 
@@ -153,7 +155,7 @@ CUDA_VISIBLE_DEVICES=0 ./abcboost_train -method robustlogit -data data/ijcnn1.tr
 ```
 ./abcboost_train -data data/covtype.train.csv -J 16 -v 0.08 -iter 2000 -search 0 
 ```
-注意，穷举搜索生成更能泛化的模型，同时也需要更多的训练时间。对于`covtype`数据集(其有7个类)，使用`-search 0`等价于使用`-search 7`。
+注意，穷举搜索通常生成泛化性能很好的模型，但是同时也需要更多的训练时间。对于`covtype`数据集(其有7个类)，使用`-search 0`等价于使用`-search 7`。
 
 `-additional_files`中提供的额外文件的标签不会被用于训练，它们仅被用于生成(可能)更好的装箱量化。当使用额外文件时，可能可以获得更好的测试结果。
 
@@ -370,9 +372,9 @@ model = abcboost.train(Y,X,'abcrobustlogit',100,20,0.1)
 res = abcboost.test(testY,testX,model)
 ```
 
-## 数据清理和分类特征(Categorical Feature)的处理
+## 数据清理和类别特征(Categorical Feature)的处理
 
-我们提供了一个可执行文件`abcboost_clean`用于清理CSV文件和检测分类特征。分类特征将被编码为one-hot表示，并被防止在数字特征之后。处理后的数据集(默认情况下)将以libsvm格式储存。用户也可以选择指定输出成CSV格式。
+我们提供了一个可执行文件`abcboost_clean`用于清理CSV文件和检测类别特征。类别特征将被编码为one-hot表示，并被放在数字特征之后。处理后的数据集(默认情况下)将以libsvm格式储存。用户也可以选择指定输出成CSV格式。
 
 我们来看一个示例: [Census-Income (KDD) Data Set](https://archive.ics.uci.edu/ml/machine-learning-databases/census-income-mld/). 首先，这是一个二分类数据集合，标签在最后一列，为`- 50000`和`50000+`。这两个标签会被分别转换为`0`和`1`，并被放置在输出数据的第一列中。此数据集包含缺失值和许多由字符串表示的分类特征。有趣的是，在这个数据集`Census-Income (KDD) Data Set`中，我们注意到`MART`略优于`Robust LogitBoost`。
 
@@ -389,13 +391,13 @@ Found non-numeric labels:
 Cleaning summary: | # data: 299285 | # numeric features 14 | # categorical features: 28 | # converted features: 401 | # classes: 2
 ```
 
-在上面的命令中，`-additional_files data/census-income.test`表示`census-income.data`和`census-income.test`将在内部被合并成一个文件以处理分类特征。或者我们也可以先清理`census-income.data`，然后再使用储存在`census-income.data.cleaninfo`的信息来单独处理`census-income.test`: 
+在上面的命令中，`-additional_files data/census-income.test`表示`census-income.data`和`census-income.test`将在内部被合并成一个文件以处理类别特征。或者我们也可以先清理`census-income.data`，然后再使用储存在`census-income.data.cleaninfo`的信息来单独处理`census-income.test`: 
 
 ```
 ./abcboost_clean -data data/census-income.data -label_column -1
 ./abcboost_clean -data data/census-income.test -cleaninfo data/census-income.data.cleaninfo -cleaned_format csv 
 ```
-请注意，因为额外文件中可能包含额外的分类特征，上述的两种方法可能产生不同的输出文件。
+请注意，因为额外文件中可能包含额外的类别特征，上述的两种方法可能产生不同的输出文件。
 
 
 总之，`abcboost_clean`具有许多功能，接下来我们列出了诸多选项和其对应的解释: 
@@ -405,13 +407,13 @@ Cleaning summary: | # data: 299285 | # numeric features 14 | # categorical featu
 * `-ignore_columns` CSV文件中需要忽略的列。我们可以用(半角)逗号来分隔多个列的下标，例如，`-ignore_columns 1,3,-2`忽略了第一列，第三列，和倒数第二列。下标是从1开始计数的。逗号和列下标之间不应有空格。
 * `-ignore_rows` CSV文件中需要忽略的行。我们可以用(半角)逗号来分隔多个行的下标。
 * `-label_column` (默认值 1) 包含标签的列下标
-* `-category_limit` (默认值 10000) 一个分类特征中最多可以出现的类别数。在自动检测中，如果在一个特征中出现的分类特征数超过了这个限制，我们会将该列视为数字特征，并将非数字值视为缺失值。我们可以通过指定`-additional_categorical_columns`来绕过这个限制。
-* `-additional_categorical_columns` 指定额外的分类特征列(它将覆盖自动检测的结果)
+* `-category_limit` (默认值 10000) 一个类别特征中最多可以出现的类别数。在自动检测中，如果在一个特征中出现的类别特征数超过了这个限制，我们会将该列视为数字特征，并将非数字值视为缺失值。我们可以通过指定`-additional_categorical_columns`来绕过这个限制。
+* `-additional_categorical_columns` 指定额外的类别特征列(它将覆盖自动检测的结果)
 * `-additional_numeric_columns` 指定额外数字特征。这些列中的非数字值都将被视为确实值。
 * `-missing_values` (默认值 ne,na,nan,none,null,unknown,,?) 指定缺失值的表示方式(不区分大小写)。
 * `-missing_substitution` (默认值 0) 我们会将所有缺失值替换为此数字
 * `-cleaned_format` (默认值 libsvm) 清理后的数据集输出格式。可以将其指定为csv或libsvm。我们建议使用libsvm格式，libsvm格式对于one-hot编码有更紧凑的表示。
-* `-cleaninfo` 指定`.cleaninfo`文件。如果这个文件没被指定，我们会生成一个后缀为`.cleaninfo`的文件，此文件包含了数据清理的信息，例如标签列、分类特征的映射等。通过指定`-cleaninfo`，我们可以使用与上次清理相同的映射来清理其他数据。例如，我们首先清理训练数据，然后使用训练数据的`.cleaninfo`文件来清理测试数据以确保它们具有相同的特征映射。请注意`-ignore_rows`的值未被保存在`.cleaninfo`中。
+* `-cleaninfo` 指定`.cleaninfo`文件。如果这个文件没被指定，我们会生成一个后缀为`.cleaninfo`的文件，此文件包含了数据清理的信息，例如标签列、类别特征的映射等。通过指定`-cleaninfo`，我们可以使用与上次清理相同的映射来清理其他数据。例如，我们首先清理训练数据，然后使用训练数据的`.cleaninfo`文件来清理测试数据以确保它们具有相同的特征映射。请注意`-ignore_rows`的值未被保存在`.cleaninfo`中。
 * `-additional_files` 与`-data`一起清理的额外文件。例如，我们可以通过在`-data`中指定训练数据文件，在`-additional_files`中指定测试和验证数据文件(文件名用半角逗号隔开，不含空格)来同时清理这三个文件。
 
 ## 参考文献

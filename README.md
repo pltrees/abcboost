@@ -49,7 +49,7 @@ make
 
 ### Datasets 
 
-Four datasets are provided under `data/` folder: 
+Five datasets are provided under `data/` folder: 
 
 [comp_cpu](http://www.cs.toronto.edu/~delve/data/comp-activ/desc.html) for regression, in both CSV  and libsvm formats: `comp_cpu.train.libsvm`, `comp_cpu.train.csv`, `comp_cpu.test.libsvm`, `comp_cpu.test.csv`. Note that other tree platforms may not support the CSV format. 
 
@@ -58,6 +58,9 @@ Four datasets are provided under `data/` folder:
 [covtype](https://archive.ics.uci.edu/ml/datasets/covertype) for multi-class classification. Note that ABCBoost package does not require class labels to start from `0` while other platforms may require so. 
 
 [mslr10k](https://www.microsoft.com/en-us/research/project/mslr/) for ranking. Only a small subset is provided here. 
+
+
+[Census-Income (KDD) Data Set](https://archive.ics.uci.edu/ml/machine-learning-databases/census-income-mld/) to illustrate data cleaning and categorical feature processing. 
 
 
 ### Lp Regression 
