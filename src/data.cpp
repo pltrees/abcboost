@@ -1315,6 +1315,10 @@ void Data::clean_one_file(std::string path,const std::vector<std::string>& buffe
         int idx = columns_map[j];
         double v = 1;
         int offset = 0;
+        if(j >= is_categorical.size()){
+          printf("[Error] found column %d on row %d in %s, we only have %d columns in cleaninfo\n",j + one_based,i - begin_line + one_based,path.c_str(),is_categorical.size());
+          exit(1);
+        }
         if(is_categorical[j]){
           if(is_missing){
             offset = 0;
