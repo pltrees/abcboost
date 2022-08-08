@@ -1,4 +1,4 @@
-[English](./README.md) | 中文文档
+[English](https://github.com/pltrees/abcboost) | 中文文档
 
 # ABCBoost
 
