@@ -783,6 +783,8 @@ void Data::loadLibsvmFormat(std::string path) {
   n_feat_global.resize(T);
 
   omp_set_num_threads(T);
+  bool one_based_warning = false;
+
 #pragma omp parallel
   {
     int n_feats_local = 0;
@@ -819,6 +821,10 @@ void Data::loadLibsvmFormat(std::string path) {
             i_global[t].resize(n_feats_local);
             v_global[t].resize(n_feats_local);
           }
+          if(j < 1){
+            one_based_warning = true;
+            continue;
+          }
           i_global[t][j - 1].push_back(i);
           v_global[t][j - 1].push_back(j_val);
         }
@@ -833,6 +839,7 @@ void Data::loadLibsvmFormat(std::string path) {
         data_header.n_feats = n_feats_local;
     };
   }
+  printf("[Warning] ignored invalid index. Column index must start with the index 1 in libsvm format.\n");
 
   Xi.resize(data_header.n_feats);
   Xv_raw.resize(data_header.n_feats);

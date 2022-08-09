@@ -724,6 +724,7 @@ SEXP read_libsvm(SEXP r_path) {
   int start = 0, end = n_lines;
   int p_cnt = 0;
   ps.push_back(p_cnt);
+  bool one_based_warning = false;
   for (int i = start; i < end; ++i) {
     char* token = &(buffer[i][0]);
     char* ptr;
@@ -743,6 +744,10 @@ SEXP read_libsvm(SEXP r_path) {
         is_key = true;
         j_val = atof(pos);
         
+        if(j < 1){
+          one_based_warning = true;
+          continue;
+        }
         is.push_back(j - 1);
         xs.push_back(j_val);
         ++p_cnt;
@@ -750,6 +755,8 @@ SEXP read_libsvm(SEXP r_path) {
     }
     ps.push_back(p_cnt);
   }
+  if(one_based_warning)
+    printf("[Warning] ignored invalid index. Column index must start with the index 1 in libsvm format.\n");
   
   SEXP r_is = PROTECT(allocVector(INTSXP, is.size()));
   for (int i = 0; i < is.size(); ++i) 
