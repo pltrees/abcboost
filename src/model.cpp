@@ -730,9 +730,9 @@ void Regression::print_test_message(int iter,double iter_time,double& low_loss){
 #endif
   if(config->save_log){
     if(loss_name != ""){
-      fprintf(log_out,"%4d %20.14e %20.14e %.5f\n", iter, l1_loss, l2_loss, loss, iter_time);
+      fprintf(log_out,"%4d %20.14e %20.14e %20.14e %.5f\n", iter, l1_loss, l2_loss, loss, iter_time);
     }else{
-      fprintf(log_out,"%4d %20.14e %.5f\n", iter, l1_loss, loss, iter_time);
+      fprintf(log_out,"%4d %20.14e %20.14e %.5f\n", iter, l1_loss, loss, iter_time);
     }
   }
   if(config->from_wrapper){
