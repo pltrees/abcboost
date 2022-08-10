@@ -839,7 +839,8 @@ void Data::loadLibsvmFormat(std::string path) {
         data_header.n_feats = n_feats_local;
     };
   }
-  printf("[Warning] ignored invalid index. Column index must start with the index 1 in libsvm format.\n");
+  if(one_based_warning)
+    printf("[Warning] ignored invalid index. Column index must start with the index 1 in libsvm format.\n");
 
   Xi.resize(data_header.n_feats);
   Xv_raw.resize(data_header.n_feats);
