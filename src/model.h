@@ -82,7 +82,6 @@ class GradientBoosting {
   int argmax(std::vector<double>& f_vector);
   virtual double getAccuracy();
 	virtual int getError();
-  std::string getDataName();
   virtual double getLoss();
   virtual double getAUC();
   double getAUC(double* f_values, int k);

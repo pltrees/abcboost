@@ -422,13 +422,6 @@ return;
   }
 }
 
-std::string GradientBoosting::getDataName() {
-  int data_name_start_nix = config->data_path.find_last_of('/') + 1;
-  int data_name_start_win = config->data_path.find_last_of('\\') + 1;
-  int data_name_start = std::max(data_name_start_nix, data_name_start_win);
-  std::string data_name = config->data_path.substr(data_name_start);
-  return data_name;
-}
 
 /**
  * Helper method to sample instances/features.
@@ -488,10 +481,7 @@ void GradientBoosting::saveModel(int iter) {
  * Helper method to setup files to save log information and the model.
  */
 void GradientBoosting::setupExperiment() {
-  int data_name_start_nix = config->data_path.find_last_of('/') + 1;
-  int data_name_start_win = config->data_path.find_last_of('\\') + 1;
-  int data_name_start = std::max(data_name_start_nix, data_name_start_win);
-  std::string data_name = config->data_path.substr(data_name_start);
+  std::string data_name = config->getDataName();
 
   struct stat buffer;
   if (stat(config->experiment_folder.c_str(), &buffer) != 0) {

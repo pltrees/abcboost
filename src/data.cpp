@@ -79,9 +79,12 @@ void Data::loadRankQuery() {
  * @param[in] fileptr: Pointer to the FILE object
  */
 void Data::loadData(bool from_scratch) {
-  if (!doesFileExist(config->data_path) && config->from_wrapper == false) {
-    fprintf(stderr, "[ERROR] Data file does not exist!\n");
-    exit(1);
+  std::vector<std::string> all_files = Config::split(config->data_path);
+  for(auto p : all_files){
+    if (!doesFileExist(p) && config->from_wrapper == false) {
+      fprintf(stderr, "[ERROR] Data file (%s) does not exist!\n",p.c_str());
+      exit(1);
+    }
   }
   Utils::Timer timer = Utils::Timer();
   Utils::Timer timer_all = Utils::Timer();
@@ -100,7 +103,21 @@ void Data::loadData(bool from_scratch) {
                                   config->mem_n_row, config->mem_n_col);
     }
   } else {
-    config->data_is_matrix = testDataIsMatrix(config->data_path);
+    std::vector<bool> is_matrix(all_files.size(),false);
+    for(int i = 0;i < all_files.size();++i){
+      is_matrix[i] = testDataIsMatrix(all_files[i]);
+    }
+    if(all_files.size() == 0){
+      printf("[Error] no valid data found in -data (%s)\n",config->data_path.c_str());
+      exit(1);
+    }
+    for(int i = 1;i < is_matrix.size();++i){
+      if(is_matrix[i] != is_matrix[i - 1]){
+        printf("[Error] found inconsistent file formats in -data. Please make sure they are all CSV or libsvm\n");
+        exit(1);
+      }
+    }
+    config->data_is_matrix = is_matrix[0];
     if (config->data_is_matrix) {
       loadMatrixFormat(config->data_path);
     } else {
@@ -276,24 +293,6 @@ void Data::loadDataHeader(FILE* fileptr) {
   }
 }
 
-std::vector<std::string> Data::split(const std::string& s, char delimiter) {
-  std::vector<std::string> ret;
-  std::string now = "";
-  char quote = '"';
-  bool in_quote = false;
-  for (const auto& ch : s) {
-    if (ch == quote){
-      in_quote = !in_quote;
-    }else if (ch == delimiter && in_quote == false) {
-      ret.push_back(now);
-      now = "";
-    } else {
-      now += ch;
-    }
-  }
-  if (now != "") ret.push_back(now);
-  return ret;
-}
 
 
 /**
@@ -312,7 +311,7 @@ void Data::adaptiveQuantization() {
   }
   config->default_label = data_header.idx2label.size() > 0 ? data_header.idx2label[0] : Y[0];
 
-  std::vector<std::string> additional_files = split(config->additional_files);
+  std::vector<std::string> additional_files = Config::split(config->additional_files);
   std::vector<std::unique_ptr<Data>> data_pool;
   // std::vector<Data*> data_pool;
   for (const auto& file : additional_files) {
@@ -325,7 +324,7 @@ void Data::adaptiveQuantization() {
       data_pool[i]->loadLibsvmFormat(additional_files[i]);
     }
   }
-  std::vector<std::string> additional_files_no_label = split(config->additional_files_no_label);
+  std::vector<std::string> additional_files_no_label = Config::split(config->additional_files_no_label);
   auto before_size = data_pool.size();
   for (const auto& file : additional_files_no_label) {
     data_pool.emplace_back(new Data(config));
@@ -658,12 +657,15 @@ void Data::loadMemoryColumnMajorMatrix(double* Y_matrix, double* X_matrix,
  */
 void Data::loadMatrixFormat(std::string path) {
   const char* delimiter = " ,\t";
-  std::ifstream infile(path);
+  std::vector<std::string> all_files = Config::split(path);
   std::string line;
   std::vector<std::string> buffer;
 
-  while (getline(infile, line)) {
-    buffer.push_back(line);
+  for(auto path : all_files){
+    std::ifstream infile(path);
+    while (getline(infile, line)) {
+      buffer.push_back(line);
+    }
   }
 
   int T = 1;
@@ -755,12 +757,15 @@ void Data::loadMatrixFormat(std::string path) {
  */
 void Data::loadLibsvmFormat(std::string path) {
   const char* delimiter = " ,:";
-  std::ifstream infile(path);
+  std::vector<std::string> all_files = Config::split(path);
   std::string line;
   std::vector<std::string> buffer;
-
-  while (getline(infile, line)) {
-    buffer.push_back(line);
+  
+  for(auto path : all_files){
+    std::ifstream infile(path);
+    while (getline(infile, line)) {
+      buffer.push_back(line);
+    }
   }
 
   int T = 1;
@@ -953,20 +958,13 @@ void Data::constructAuxData(){
 }
 
 void Data::cleanCSV(){
-  const std::string path = config->data_path;
-  if (!doesFileExist(path) && config->from_wrapper == false) {
-    fprintf(stderr, "[ERROR] Data file does not exist!\n");
-    exit(1);
-  }
-  std::vector<std::string> all_files = split(config->additional_files);
+  std::vector<std::string> all_files = Config::split(config->data_path);
   for(auto p : all_files){
-    if (!doesFileExist(p)) {
-      fprintf(stderr, "[ERROR] Data file does not exist!\n");
+    if (!doesFileExist(p) && config->from_wrapper == false) {
+      fprintf(stderr, "[ERROR] Data file (%s) does not exist!\n",p.c_str());
       exit(1);
     }
   }
-  all_files.insert(all_files.begin(),path);
-  
 
   std::vector<std::string> buffer;
   std::vector<int> lines_offset;
@@ -1027,7 +1025,7 @@ void Data::cleanCSV(){
   }
   const std::vector<int> additional_categorical_columns = splitint(config->additional_categorical_columns);
   const std::vector<int> additional_numeric_columns = splitint(config->additional_numeric_columns);
-  auto tmp = split(config->missing_values);
+  auto tmp = Config::split(config->missing_values);
   missing_values = std::set<std::string>(tmp.begin(),tmp.end());
   const int category_limit = config->category_limit;
 
@@ -1047,7 +1045,7 @@ void Data::cleanCSV(){
     for (int i = start; i < end; ++i) {
       if(invector(i + one_based,ignore_rows))
         continue;
-      const std::vector<std::string> vals = split(buffer[i]);
+      const std::vector<std::string> vals = Config::split(buffer[i]);
       if(vals.size() > n_feats_local)
         n_feats_local = vals.size();
       for(int j = 0;j < vals.size();++j){
@@ -1204,20 +1202,13 @@ void Data::cleanCSV(){
 }
 
 void Data::cleanCSVwithInfo(){
-  const std::string path = config->data_path;
-  if (!doesFileExist(path) && config->from_wrapper == false) {
-    fprintf(stderr, "[ERROR] Data file does not exist!\n");
-    exit(1);
-  }
-  std::vector<std::string> all_files = split(config->additional_files);
+  std::vector<std::string> all_files = Config::split(config->data_path);
   for(auto p : all_files){
-    if (!doesFileExist(p)) {
-      fprintf(stderr, "[ERROR] Data file does not exist!\n");
+    if (!doesFileExist(p) && config->from_wrapper == false) {
+      fprintf(stderr, "[ERROR] Data file (%s) does not exist!\n",p.c_str());
       exit(1);
     }
   }
-  all_files.insert(all_files.begin(),path);
-  
 
   std::vector<std::string> buffer;
   std::vector<int> lines_offset;
@@ -1299,7 +1290,7 @@ void Data::clean_one_file(std::string path,const std::vector<std::string>& buffe
   for(int i = begin_line;i < end_line;++i){
     if(invector(i + one_based,ignore_rows))
       continue;
-    const std::vector<std::string> vals = split(buffer[i]);
+    const std::vector<std::string> vals = Config::split(buffer[i]);
     double label = 0;
     std::vector<std::pair<int,double>> kv;
     for(int j = 0;j < vals.size();++j){
@@ -1425,7 +1416,7 @@ void Data::deserializeCleanInfo(FILE* fp){
 
   fread(&missing_substitution, sizeof(double), 1, fp);
   std::string tmpstr = Utils::deserialize_str(fp);
-  auto tmp = split(tmpstr);
+  auto tmp = Config::split(tmpstr);
   missing_values = std::set<std::string>(tmp.begin(),tmp.end());
   fread(&numeric_labels, sizeof(bool), 1, fp);
 
@@ -1456,7 +1447,7 @@ inline std::string Data::trim(const std::string& str){
 }
 
 inline std::vector<int> Data::splitint(std::string s){
-  std::vector<std::string> tmp = split(s);
+  std::vector<std::string> tmp = Config::split(s);
   std::vector<int> ret;
   ret.reserve(tmp.size());
   std::transform(tmp.begin(),tmp.end(),std::back_inserter(ret),[&](std::string s) {return stoi(s);});

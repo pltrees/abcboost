@@ -160,8 +160,6 @@ class Data {
   void restoreDenseFeatures();
   bool testDataIsMatrix(std::string path);
 
-  inline std::vector<std::string> split(const std::string& s, char delimiter = ',');
-
   inline std::string trim(const std::string& str);
   inline std::vector<int> splitint(std::string s);
   template<class T>

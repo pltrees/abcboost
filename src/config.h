@@ -611,18 +611,44 @@ class Config {
   }
 
   void sanityCheck() {
+    if(model_mode == "clean" && additional_files != ""){
+      printf("[Warning] ignored -additional_files in abcboost_clean. Use comma separated file names in -data\n");
+    }
   }
 
   std::string getDataName() {
-    int data_name_start_nix = data_path.find_last_of('/') + 1;
-    int data_name_start_win = data_path.find_last_of('\\') + 1;
+    std::vector<std::string> all_files = split(data_path);
+    std::string path = "";
+    if(all_files.size() > 0)
+      path = all_files[0];
+    int data_name_start_nix = path.find_last_of('/') + 1;
+    int data_name_start_win = path.find_last_of('\\') + 1;
     int data_name_start = std::max(data_name_start_nix, data_name_start_win);
-    std::string data_name = data_path.substr(data_name_start);
+    std::string data_name = path.substr(data_name_start);
     return data_name;
   }
 
   std::string getMappingName() {
     return getDataName() + mapping_suffix; 
+  }
+
+  static std::vector<std::string> split(const std::string& s, char delimiter = ',') {
+    std::vector<std::string> ret;
+    std::string now = "";
+    char quote = '"';
+    bool in_quote = false;
+    for (const auto& ch : s) {
+      if (ch == quote){
+        in_quote = !in_quote;
+      }else if (ch == delimiter && in_quote == false) {
+        ret.push_back(now);
+        now = "";
+      } else {
+        now += ch;
+      }
+    }
+    if (now != "") ret.push_back(now);
+    return ret;
   }
 };
 
