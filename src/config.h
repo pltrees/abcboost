@@ -357,7 +357,7 @@ class Config {
 * `-model_n_iterations`, `-iter` (default 1000)\n\
 * `-model_save_every`, `-save` (default 100)\n\
 * `-model_eval_every`, `-eval` (default 1)\n\
-* `-model_name`, `-method` regression/lambdarank/mart/abcmart/robustlogit/abcrobustlogit (default abcrobustlogit)\n\
+* `-model_name`, `-method` regression/lambdarank/mart/abcmart/robustlogit/abcrobustlogit (default robustlogit)\n\
 * `-model_pretrained_path`, `-model`\n\
 #### Adaptive Base Class (ABC) related:\n\
 * `-model_base_candidate_size`, `base_candidates_size`, `-search`, base class searching size in abcmart/abcrobustlogit (default 2)\n\

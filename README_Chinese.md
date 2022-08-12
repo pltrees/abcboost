@@ -74,7 +74,13 @@ make
 ```
 它会输出两个文件: (1)  `comp_cpu.test.csv_regression_J20_v0.1_p2.testlog`储存了所有迭代的L1和L2的测试误差; (2) `comp_cpu.test.csv_regression_J20_v0.1_p2.prediction` 储存了所有测试数据点的预测值。
 
+`abcboost_train`和`abcboost_predict`这两个可执行文件支持多个输入文件。例如，我们可以同时使用`comp_cpu.train.csv`和`comp_cpu.test.csv`来训练模型:
 
+```
+./abcboost_train -method regression -lp 2 -data data/comp_cpu.train.csv,data/comp_cpu.test.csv -J 20 -v 0.1 
+
+```
+生成的模型文件只按照第一个文件名命名，在本例中，模型文件名依然是`comp_cpu.train.libsvm_regression_J10_v0.1_p2.model`。
 
 ### 二分类问题 (Robust LogitBoost) 
 
@@ -134,6 +140,8 @@ CUDA_VISIBLE_DEVICES=0 ./abcboost_train -method robustlogit -data data/ijcnn1.tr
 ```
 这里我们指定了`GPU 0`作为训练设备。(使用`nvidia-smi`命令可以查询可用的GPU)
 
+当编译了支持GPU的可执行文件时，如果用户想只使用CPU来进行训练，只需加上选项`-use_gpu 0`。 
+
 
 ### 参数
 
@@ -148,12 +156,12 @@ CUDA_VISIBLE_DEVICES=0 ./abcboost_train -method robustlogit -data data/ijcnn1.tr
 
 以2000次迭代、每棵树16个叶子和0.08的学习率训练模型:
 ```
-./abcboost_train -data data/covtype.train.csv -J 16 -v 0.08 -iter 2000
+./abcboost_train -method abcrobustlogit -data data/covtype.train.csv -J 16 -v 0.08 -iter 2000
 ```
 
 以2000次迭代、每棵树16个叶子和0.08的学习率训练模型，并且启用穷举基类搜索:
 ```
-./abcboost_train -data data/covtype.train.csv -J 16 -v 0.08 -iter 2000 -search 0 
+./abcboost_train -method abcrobustlogit -data data/covtype.train.csv -J 16 -v 0.08 -iter 2000 -search 0 
 ```
 注意，穷举搜索通常生成泛化性能很好的模型，但是同时也需要更多的训练时间。对于`covtype`数据集(其有7个类)，使用`-search 0`等价于使用`-search 7`。
 
@@ -166,7 +174,7 @@ CUDA_VISIBLE_DEVICES=0 ./abcboost_train -method robustlogit -data data/ijcnn1.tr
 * `-data_min_bin_size` 装箱量化中bin的最小大小
 * `-data_sparsity_threshold` 数据稀疏度阈值
 * `-data_max_n_bins` 最大bin数量 (默认值 1000)
-* `-data_path, -data` 训练和测试数据的路径
+* `-data_path, -data` 训练和测试数据的路径。我们可以在`-data`中指定多个文件，文件名用`,`分隔，不包含空格。例如: `-data file1,file2,file3`
 #### 树相关:
 * `-tree_clip_value` 梯度裁剪值 (默认值 50)
 * `-tree_damping_factor`, 分母正则化参数 (默认值 1e-100)
@@ -180,7 +188,7 @@ CUDA_VISIBLE_DEVICES=0 ./abcboost_train -method robustlogit -data data/ijcnn1.tr
 * `-model_n_iterations`, `-iter` 迭代数 (默认值 1000)
 * `-model_save_every`, `-save` 每多少次迭代保存模型 (默认值 100)
 * `-model_eval_every`, `-eval` 每多少次迭代计算损失函数 (默认值 1)
-* `-model_name`, `-method` 训练方法，可选参数有regression/lambdarank/mart/abcmart/robustlogit/abcrobustlogit (默认值 abcrobustlogit)
+* `-model_name`, `-method` 训练方法，可选参数有regression/lambdarank/mart/abcmart/robustlogit/abcrobustlogit (默认值 robustlogit)
 * `-model_pretrained_path`, `-model` 模型路径
 #### Adaptive Base Class (ABC) 相关:
 * `-model_base_candidate_size`, `base_candidates_size`, `-search` (默认值 2) 在abcmart和abcrobustlogit训练方法中的基类搜索大小
@@ -381,7 +389,7 @@ res = abcboost.test(testY,testX,model)
 
 执行以下命令将为训练数据`census-income.data`和测试数据`census-income.test`生成清理后的`csv`文件:
 ```
-./abcboost_clean -data data/census-income.data -label_column -1 -cleaned_format csv -additional_files data/census-income.test
+./abcboost_clean -data data/census-income.data,data/census-income.test -label_column -1 -cleaned_format csv  
 ```
 `-label_column -1`表示`最后`一列为标签。如果我们希望以不同格式储存数据，可以将`csv`替换为`libsvm`。默认选择为`libsvm`。以下是上述命令输出的结尾: 
 
@@ -391,7 +399,7 @@ Found non-numeric labels:
 Cleaning summary: | # data: 299285 | # numeric features 14 | # categorical features: 28 | # converted features: 401 | # classes: 2
 ```
 
-在上面的命令中，`-additional_files data/census-income.test`表示`census-income.data`和`census-income.test`将在内部被合并成一个文件以处理类别特征。或者我们也可以先清理`census-income.data`，然后再使用储存在`census-income.data.cleaninfo`的信息来单独处理`census-income.test`: 
+在上面的命令中，我们在`-data`中指定了多个文件。`census-income.data`和`census-income.test`将在内部被合并成一个文件以处理类别特征。或者我们也可以先清理`census-income.data`，然后再使用储存在`census-income.data.cleaninfo`的信息来单独处理`census-income.test`: 
 
 ```
 ./abcboost_clean -data data/census-income.data -label_column -1
@@ -403,7 +411,7 @@ Cleaning summary: | # data: 299285 | # numeric features 14 | # categorical featu
 总之，`abcboost_clean`具有许多功能，接下来我们列出了诸多选项和其对应的解释: 
 
 
-* `-data` 需要清理的文件
+* `-data` 需要清理的文件。我们通过在`-data`中指定多个文件名来同时清理训练、测试和验证数据集（文件名之间用半角逗号隔开，不包含空格）。
 * `-ignore_columns` CSV文件中需要忽略的列。我们可以用(半角)逗号来分隔多个列的下标，例如，`-ignore_columns 1,3,-2`忽略了第一列，第三列，和倒数第二列。下标是从1开始计数的。逗号和列下标之间不应有空格。
 * `-ignore_rows` CSV文件中需要忽略的行。我们可以用(半角)逗号来分隔多个行的下标。
 * `-label_column` (默认值 1) 包含标签的列下标
@@ -414,7 +422,6 @@ Cleaning summary: | # data: 299285 | # numeric features 14 | # categorical featu
 * `-missing_substitution` (默认值 0) 我们会将所有缺失值替换为此数字
 * `-cleaned_format` (默认值 libsvm) 清理后的数据集输出格式。可以将其指定为csv或libsvm。我们建议使用libsvm格式，libsvm格式对于one-hot编码有更紧凑的表示。
 * `-cleaninfo` 指定`.cleaninfo`文件。如果这个文件没被指定，我们会生成一个后缀为`.cleaninfo`的文件，此文件包含了数据清理的信息，例如标签列、类别特征的映射等。通过指定`-cleaninfo`，我们可以使用与上次清理相同的映射来清理其他数据。例如，我们首先清理训练数据，然后使用训练数据的`.cleaninfo`文件来清理测试数据以确保它们具有相同的特征映射。请注意`-ignore_rows`的值未被保存在`.cleaninfo`中。
-* `-additional_files` 与`-data`一起清理的额外文件。例如，我们可以通过在`-data`中指定训练数据文件，在`-additional_files`中指定测试和验证数据文件(文件名用半角逗号隔开，不含空格)来同时清理这三个文件。
 
 ## 参考文献
 * Ping Li. [ABC-Boost: Adaptive Base Class Boost for Multi-Class Classification](https://icml.cc/Conferences/2009/papers/417.pdf). ICML 2009.

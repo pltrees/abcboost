@@ -75,14 +75,13 @@ This will generate a model named `comp_cpu.train.libsvm_regression_J10_v0.1_p2.m
 ```
 which outputs two files: (1)  `comp_cpu.test.csv_regression_J20_v0.1_p2.testlog` which stores the history of test L1 and L2 loss for all the iterations; and (2) `comp_cpu.test.csv_regression_J20_v0.1_p2.prediction` which stores the predictions for all testing data points.  
 
-
-The train/predict executables support multiple input data files. For example, we can use both `comp_cpu.train.csv` and `comp_cpu.test.csv' for training the model: 
+The train/predict executables support multiple input data files. For example, we can use both `comp_cpu.train.csv` and `comp_cpu.test.csv` for training the model:
 
 ```
 ./abcboost_train -method regression -lp 2 -data data/comp_cpu.train.csv,data/comp_cpu.test.csv -J 20 -v 0.1 
 
 ```
-Note that the model is named accordingly only the first input data file, in this case, the model name is still `comp_cpu.train.libsvm_regression_J10_v0.1_p2.model` . 
+Note that the model is named accordingly only the first input data file, in this case, the model name is still `comp_cpu.train.libsvm_regression_J10_v0.1_p2.model`. 
 
 
 ### Binary Classification (Robust LogitBoost) 
