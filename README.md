@@ -76,6 +76,14 @@ This will generate a model named `comp_cpu.train.libsvm_regression_J10_v0.1_p2.m
 which outputs two files: (1)  `comp_cpu.test.csv_regression_J20_v0.1_p2.testlog` which stores the history of test L1 and L2 loss for all the iterations; and (2) `comp_cpu.test.csv_regression_J20_v0.1_p2.prediction` which stores the predictions for all testing data points.  
 
 
+The train/predict executables support multiple input data files. For example, we can use both `comp_cpu.train.csv` and `comp_cpu.test.csv' for training the model: 
+
+```
+./abcboost_train -method regression -lp 2 -data data/comp_cpu.train.csv,data/comp_cpu.test.csv -J 20 -v 0.1 
+
+```
+Note that the model is named accordingly only the first input data file, in this case, the model name is still `comp_cpu.train.libsvm_regression_J10_v0.1_p2.model` . 
+
 
 ### Binary Classification (Robust LogitBoost) 
 
@@ -117,6 +125,9 @@ Ranking tasks are supported by using `-method lambdarank`. Note that the query/g
 ./abcboost_predict -data data/mslr10k.test -query data/mslr10k.test.query -model mslr10k.train_lambdarank_J20_v0.1.model
 ```
 
+
+
+
 ### Feature Binning (Histograms) (`-data_max_n_bins`)
 
 
@@ -133,6 +144,8 @@ If the executables are compiled with GPU support, we can specify the GPU device 
 CUDA_VISIBLE_DEVICES=0 ./abcboost_train -method robustlogit -data data/ijcnn1.train.csv -J 20 -v 0.1 -iter 1000
 ```
 Here we specify `GPU 0` as the device. (Use `nvidia-smi` to find out available GPUs)
+
+If users hope to use GPU-complied executables for CPU-only, simply add `-use_gpu 0`. 
 
 
 ### Parameters
@@ -399,7 +412,7 @@ In the above command, multiple files are specified in `-data`. The `census-incom
 Note that the above two ways may not necessarily generate the same results because the additional files may contain additional categories. In this particular example, one can check that the results are the same.  
 
 
-In summary, `abcboost_clean` is fairly powerful with many functionalities. In the  following, we list the options and explanations. 
+In summary, `abcboost_clean` has a variety of functionalities. In the following, we list the options and explanations. 
 
 
 * `-data` the data files to clean. We may clean the training, testing, validating dataset together by specifying multiple file names in `-data` (file names are separated by comma with no space).
