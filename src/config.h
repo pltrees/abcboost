@@ -72,7 +72,7 @@ class Config {
   int model_save_every = 100;
   int model_eval_every = 1;
   std::string model_mode = "train";
-  std::string model_name = "abcrobustlogit";
+  std::string model_name = "robustlogit";
   std::string model_pretrained_path = "";
   std::string model_gap = "5";
   std::string model_mapping_name = "";

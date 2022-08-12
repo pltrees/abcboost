@@ -148,12 +148,12 @@ Here we illustrate some common parameters and provide some examples:
 
 To train the model with 2000 iterations, 16 leaves per tree and 0.08 learning rate:
 ```
-./abcboost_train -data data/covtype.train.csv -J 16 -v 0.08 -iter 2000
+./abcboost_train -method abcrobustlogit -data data/covtype.train.csv -J 16 -v 0.08 -iter 2000
 ```
 
 To train the model with 2000 iterations, 16 leaves per tree, 0.08 learning rate and enable the exhaustive base class searching:
 ```
-./abcboost_train -data data/covtype.train.csv -J 16 -v 0.08 -iter 2000 -search 0 
+./abcboost_train -method abcrobustlogit -data data/covtype.train.csv -J 16 -v 0.08 -iter 2000 -search 0 
 ```
 Note that the exhaustive searching produces better-generalized model while requiring substantially more time. For the `covtype` dataset (which has 7 classes), using `-search 0` is effectively equivalent to `-search 7`. 
 
@@ -166,7 +166,7 @@ The labels in the specified additional files are not used in the training. Only 
 * `-data_min_bin_size` minimum size of the bin
 * `-data_sparsity_threshold`
 * `-data_max_n_bins` max number of bins (default 1000)
-* `-data_path, -data` path to train/test data
+* `-data_path, -data` path to train/test data. We can specify multiple data in `-data`. The file names must be separated by comma without space. For example, `-data file1,file2,file3`
 #### Tree related:
 * `-tree_clip_value` gradient clip (default 50)
 * `-tree_damping_factor`, regularization on denominator (default 1e-100)
@@ -180,7 +180,7 @@ The labels in the specified additional files are not used in the training. Only 
 * `-model_n_iterations`, `-iter` (default 1000)
 * `-model_save_every`, `-save` (default 100)
 * `-model_eval_every`, `-eval` (default 1)
-* `-model_name`, `-method` regression/lambdarank/mart/abcmart/robustlogit/abcrobustlogit (default abcrobustlogit)
+* `-model_name`, `-method` regression/lambdarank/mart/abcmart/robustlogit/abcrobustlogit (default robustlogit)
 * `-model_pretrained_path`, `-model`
 #### Adaptive Base Class (ABC) related:
 * `-model_base_candidate_size`, `base_candidates_size`, `-search` (default 2) base class searching size in abcmart/abcrobustlogit
@@ -380,7 +380,7 @@ We provide an illustrative example: [Census-Income (KDD) Data Set](https://archi
 
 Executing the following terminal command will generate cleaned `csv` files for both training data `census-income.data` and testing data `census-income.test`: 
 ```
-./abcboost_clean -data data/census-income.data -label_column -1 -cleaned_format csv -additional_files data/census-income.test
+./abcboost_clean -data data/census-income.data,data/census-income.test -label_column -1 -cleaned_format csv  
 ```
 `-label_column -1` indicate the `last` column is for the labels.  We can replace `csv` by `libsvm` if we hope to store the data in a different format. The default choice is `libsvm`.  The following is the end of the output of the above command: 
 
@@ -390,7 +390,7 @@ Found non-numeric labels:
 Cleaning summary: | # data: 299285 | # numeric features 14 | # categorical features: 28 | # converted features: 401 | # classes: 2
 ```
 
-In the above command, `-additional_files data/census-income.test` indicates that `census-income.data` and `census-income.test` will be internally combined as one file to process categorical features. Alternatively, we can also first clean `census-income.data` and then use the information stored in `census-income.data.cleaninfo` to separately process `census-income.test`: 
+In the above command, multiple files are specified in `-data`. The `census-income.data` and `census-income.test` will be internally combined as one file to process categorical features. Alternatively, we can also first clean `census-income.data` and then use the information stored in `census-income.data.cleaninfo` to separately process `census-income.test`: 
 
 ```
 ./abcboost_clean -data data/census-income.data -label_column -1
@@ -402,7 +402,7 @@ Note that the above two ways may not necessarily generate the same results becau
 In summary, `abcboost_clean` is fairly powerful with many functionalities. In the  following, we list the options and explanations. 
 
 
-* `-data` the data file to clean
+* `-data` the data files to clean. We may clean the training, testing, validating dataset together by specifying multiple file names in `-data` (file names are separated by comma with no space).
 * `-ignore_columns` the columns to ignore in the CSV file. Multiple columns can be separated by commas, e.g., `-ignore_columns 1,3,-2` ignores the first, third, and the second last columns. The index is one-based. There should be no space between the comma and the column indices
 * `-ignore_rows` the rows to ignore in the CSV file. Multiple rows can be separated by commas
 * `-label_column` (default 1) the column contains the label
@@ -413,7 +413,6 @@ In summary, `abcboost_clean` is fairly powerful with many functionalities. In th
 * `-missing_substitution` (default 0) we will substitute all missing values with this specified number
 * `-cleaned_format` (default libsvm) the output format of the cleaned data. It can be specified to csv or libsvm. We suggest to use libsvm for a compact representation of the one-hot encoded categorical values.
 * `-cleaninfo` specifies the `.cleaninfo` file. If this is unspecified. We will generate a file with a `.cleaninfo` suffix that contains the cleaning information, e.g., label columns, categorical mapping, etc. Specifying `-cleaninfo` enables us to clean other data with the same mapping of the previous cleaning. For example, we clean the training data first. And later we can use the `.cleaninfo` of the training data to clean the testing data to ensure they have the same feature mapping. Note that the `-ignore_rows` is not saved in the `.cleaninfo`.
-* `-additional_files` the additional files to clean together with the `-data`. For example, we may clean the training, testing, validating dataset together by specifying the training data in `-data`, testing and validating data in the additional_files (file names are separated by comma with no space).
 
 ## References
 * Ping Li. [ABC-Boost: Adaptive Base Class Boost for Multi-Class Classification](https://icml.cc/Conferences/2009/papers/417.pdf). ICML 2009.
