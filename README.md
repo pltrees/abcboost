@@ -155,8 +155,8 @@ Here we illustrate some common parameters and provide some examples:
 * `-v` learning rate (default 0.1)
 * `-search` searching size for the base class (default 2: we greedily choose the base classes according to the training loss). For example, 2 means we try the class with the greatest loss and the class with the second greatest loss as base class and pick the one with lower loss as the base class for the current iteration.
 * `-n_threads` number of threads (default 1) <strong>It can only be used when multi-thread is enabled. (Compile the code with `-DOMP=ON` in cmake.)</strong>
-* `-additional_files` using other files to do bin quantization besides the training data. File names are separated by `,` without additional spaces, e.g., `-additional_files file1,file2,file3`.
-* `-additional_files_no_label` using other unlabeled files to do bin quantization besides the training data. File names are separated by `,` without additional spaces, e.g., `-additional_files_no_label file1,file2,file3`.
+* `-additional_files` using other files to do bin quantization besides the training data. File names are separated by `,`, e.g., `-additional_files file1,file2,file3`.
+* `-additional_files_no_label` using other unlabeled files to do bin quantization besides the training data. File names are separated by `,`, e.g., `-additional_files_no_label file1,file2,file3`.
 
 To train the model with 2000 iterations, 16 leaves per tree and 0.08 learning rate:
 ```
@@ -178,7 +178,7 @@ The labels in the specified additional files are not used in the training. Only 
 * `-data_min_bin_size` minimum size of the bin
 * `-data_sparsity_threshold`
 * `-data_max_n_bins` max number of bins (default 1000)
-* `-data_path, -data` path to train/test data. We can specify multiple data in `-data`. The file names must be separated by comma without space. For example, `-data file1,file2,file3`
+* `-data_path, -data` path to train/test data. We can specify multiple data in `-data`. The file names must be separated by comma. For example, `-data file1,file2,file3`
 #### Tree related:
 * `-tree_clip_value` gradient clip (default 50)
 * `-tree_damping_factor`, regularization on denominator (default 1e-100)
@@ -213,6 +213,8 @@ The labels in the specified additional files are not used in the training. Only 
 #### Other:
 * `-save_log`, 0/1 (default 0) whether save the runtime log to file
 * `-save_model`, 0/1 (default 1)
+* `-save_prob`, 0/1 (default 0) whether save the prediction probability for classification tasks
+* `-save_importance`, 0/1 (default 0) whether save the feature importance in the training
 * `-no_label`, 0/1 (default 0) It should only be enabled to output prediction file when the testing data has no label in test
 * `-test_auc`, 0/1 (default 0) whether compute AUC in test
 * `-stop_tolerance` (default 2e-14) It works for all non-regression tasks, e.g., classification. The training will stop when the total training loss is less than the stop tolerance.
@@ -414,7 +416,7 @@ Note that the above two ways may not necessarily generate the same results becau
 In summary, `abcboost_clean` has a variety of functionalities. In the following, we list the options and explanations. 
 
 
-* `-data` the data files to clean. We may clean the training, testing, validating dataset together by specifying multiple file names in `-data` (file names are separated by comma with no space).
+* `-data` the data files to clean. We may clean the training, testing, validating dataset together by specifying multiple file names in `-data` (file names are separated by comma).
 * `-ignore_columns` the columns to ignore in the CSV file. Multiple columns can be separated by commas, e.g., `-ignore_columns 1,3,-2` ignores the first, third, and the second last columns. The index is one-based. There should be no space between the comma and the column indices
 * `-ignore_rows` the rows to ignore in the CSV file. Multiple rows can be separated by commas
 * `-label_column` (default 1) the column contains the label

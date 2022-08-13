@@ -151,8 +151,8 @@ CUDA_VISIBLE_DEVICES=0 ./abcboost_train -method robustlogit -data data/ijcnn1.tr
 * `-v` 学习率 (默认值 0.1)
 * `-search` 搜索基类时搜索类的数量 (默认值 2: 我们根据训练损失贪心选择基类). 例如，2表示我们尝试将损失最大的类和损失第二大的类作为基类，并选择损失较低的类作为当前迭代的基类。
 * `-n_threads` 线程数 (默认值 1) <strong>仅在启用多线程编译的可执行文件中使用。(在编译前打开cmake的`-DOMP=ON`选项。)</strong>
-* `-additional_files` 使用训练数据外的其他文件进行装箱量化。文件名用`,`分隔，不含空格，例如，`-additional_files file1,file2,file3`。
-* `-additional_files_no_label` 使用训练数据外的其他不包含类标签的文件进行装箱量化。文件名用`,`分隔，不含空格，例如，`-additional_files_no_label file1,file2,file3`。
+* `-additional_files` 使用训练数据外的其他文件进行装箱量化。文件名用`,`分隔，例如，`-additional_files file1,file2,file3`。
+* `-additional_files_no_label` 使用训练数据外的其他不包含类标签的文件进行装箱量化。文件名用`,`分隔，例如，`-additional_files_no_label file1,file2,file3`。
 
 以2000次迭代、每棵树16个叶子和0.08的学习率训练模型:
 ```
@@ -174,7 +174,7 @@ CUDA_VISIBLE_DEVICES=0 ./abcboost_train -method robustlogit -data data/ijcnn1.tr
 * `-data_min_bin_size` 装箱量化中bin的最小大小
 * `-data_sparsity_threshold` 数据稀疏度阈值
 * `-data_max_n_bins` 最大bin数量 (默认值 1000)
-* `-data_path, -data` 训练和测试数据的路径。我们可以在`-data`中指定多个文件，文件名用`,`分隔，不包含空格。例如: `-data file1,file2,file3`
+* `-data_path, -data` 训练和测试数据的路径。我们可以在`-data`中指定多个文件，文件名用`,`分隔。例如: `-data file1,file2,file3`
 #### 树相关:
 * `-tree_clip_value` 梯度裁剪值 (默认值 50)
 * `-tree_damping_factor`, 分母正则化参数 (默认值 1e-100)
@@ -210,6 +210,8 @@ CUDA_VISIBLE_DEVICES=0 ./abcboost_train -method robustlogit -data data/ijcnn1.tr
 #### 其他:
 * `-save_log`, 0/1 (默认值 0) 是否保存日志文件
 * `-save_model`, 0/1 (默认值 1) 是否储存模型
+* `-save_prob`, 0/1 (默认值 0) 是否保存分类预测概率
+* `-save_importance`, 0/1 (默认值 0) 是否保存训练特征重要度
 * `-no_label`, 0/1 (默认值 0) 测试文件是否没有标签。仅当测试数据在测试中没有标签时，才可启用该选项以输出预测文件。
 * `-test_auc`, 0/1 (默认值 0) 是否在测试中计算AUC
 * `-stop_tolerance` (默认值 2e-14) 仅适用于非回归模型，例如分类模型。当总损失小于`-stop_tolerance`时，训练将会停止。
@@ -411,7 +413,7 @@ Cleaning summary: | # data: 299285 | # numeric features 14 | # categorical featu
 总之，`abcboost_clean`具有许多功能，接下来我们列出了诸多选项和其对应的解释: 
 
 
-* `-data` 需要清理的文件。我们通过在`-data`中指定多个文件名来同时清理训练、测试和验证数据集（文件名之间用半角逗号隔开，不包含空格）。
+* `-data` 需要清理的文件。我们通过在`-data`中指定多个文件名来同时清理训练、测试和验证数据集（文件名之间用半角逗号隔开）。
 * `-ignore_columns` CSV文件中需要忽略的列。我们可以用(半角)逗号来分隔多个列的下标，例如，`-ignore_columns 1,3,-2`忽略了第一列，第三列，和倒数第二列。下标是从1开始计数的。逗号和列下标之间不应有空格。
 * `-ignore_rows` CSV文件中需要忽略的行。我们可以用(半角)逗号来分隔多个行的下标。
 * `-label_column` (默认值 1) 包含标签的列下标

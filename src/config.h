@@ -225,7 +225,6 @@ class Config {
     fwrite(&save_log, sizeof(bool), 1, fp);
     fwrite(&save_model, sizeof(bool), 1, fp);
     fwrite(&save_prob, sizeof(bool), 1, fp);
-    fwrite(&save_importance, sizeof(bool), 1, fp);
     saveString(experiment_folder, fp);
     saveString(additional_files, fp);
     saveString(additional_files_no_label, fp);
@@ -319,7 +318,6 @@ class Config {
     ret += fread(&save_log, sizeof(bool), 1, fp);
     ret += fread(&save_model, sizeof(bool), 1, fp);
     ret += fread(&save_prob, sizeof(bool), 1, fp);
-    ret += fread(&save_importance, sizeof(bool), 1, fp);
     loadString(str, fp);
     loadString(additional_files, fp);
     loadString(additional_files_no_label, fp);
