@@ -416,7 +416,7 @@ void GradientBoosting::getTopFeatures() {
   });
 
   for (int i = 0; i < idx.size(); ++i) {
-    fprintf(fp,"%5d %.8f\n", idx[i] + 1, feature_importance[idx[i]]);
+    fprintf(fp,"%3d %3d  %.8f\n", i+1, idx[i] + 1, feature_importance[idx[i]]);
   }
   fclose(fp);
 }

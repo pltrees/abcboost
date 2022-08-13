@@ -178,7 +178,7 @@ The labels in the specified additional files are not used in the training. Only 
 * `-data_min_bin_size` minimum size of the bin
 * `-data_sparsity_threshold`
 * `-data_max_n_bins` max number of bins (default 1000)
-* `-data_path, -data` path to train/test data. We can specify multiple data in `-data`. The file names must be separated by comma. For example, `-data file1,file2,file3`
+* `-data_path, -data` path to train/test data. We can specify multiple data in `-data`. The file names are separated by comma. For example, `-data file1,file2,file3`
 #### Tree related:
 * `-tree_clip_value` gradient clip (default 50)
 * `-tree_damping_factor`, regularization on denominator (default 1e-100)

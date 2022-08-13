@@ -199,8 +199,8 @@ CUDA_VISIBLE_DEVICES=0 ./abcboost_train -method robustlogit -data data/ijcnn1.tr
 * `-model_abc_sample_min_data` `-abc_sample_min_data` (默认值 2000) 在基类搜索中的最小采样数量。这个参数仅在`-abc_sample_rate`小于`1`时生效。
 
 #### 回归相关:
-* `-regression_lp_loss`, `-lp` (默认值 2.0) 是否使用Lp范数来取代L2范数。必须指定p，(p >= 1.0)。
-* `-regression_test_lp`, `-test_lp` (默认 空) 将Lp范数作为测试日志中的附加列。必须指定p， (p 。
+* `-regression_lp_loss`, `-lp` (默认值 2.0) 是否使用Lp范数来取代L2范数。须指定p，(p >= 1.0)。
+* `-regression_test_lp`, `-test_lp` (默认 空) 将Lp范数作为测试日志中的附加列。须指定p， (p 。
 * `-regression_use_hessian` 0/1 (默认值 1) 是否在回归模型中使用二阶导数。这个参数仅在设置了`-regression_lp_loss p`并且`p`大于`2`时有效。
 * `-regression_huber_loss`, `-huber` 0/1 (默认值 0) 是否在回归模型中使用Huber损失
 * `-regression_huber_delta`, `-huber_delta` Huber损失中的delta参数。这个参数仅在`-regression_huber_loss 1`被设置时生效。
