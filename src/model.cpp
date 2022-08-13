@@ -404,22 +404,21 @@ double GradientBoosting::getAUC() {
  * Select features with the most cumulative gains.
  * @param[in] n: Number of top features to output.
  */
-void GradientBoosting::getTopFeatures(int n) {
-return;
+void GradientBoosting::getTopFeatures() {
+  std::string importance_file = config->formatted_output_name + ".importance";
+  FILE *fp = fopen(importance_file.c_str(), "w");
   // initialize original index locations
   std::vector<unsigned int> idx(feature_importance.size());
   std::iota(idx.begin(), idx.end(), 0);
-  if (n > idx.size()) n = idx.size();
   // sort indexes based on comparing values in feature_importance
   sort(idx.begin(), idx.end(), [&](unsigned int i1, unsigned int i2) {
     return feature_importance[i1] > feature_importance[i2];
   });
 
-  printf("\nTop %d important features, id : cumulative gain\n", n);
-  for (int i = 0; i < n; ++i) {
-    printf("#%2d feature id: %5d | gain: %.8f\n", i + 1, idx[i],
-           feature_importance[idx[i]]);
+  for (int i = 0; i < idx.size(); ++i) {
+    fprintf(fp,"%5d %.8f\n", idx[i] + 1, feature_importance[idx[i]]);
   }
+  fclose(fp);
 }
 
 
@@ -819,8 +818,7 @@ void Regression::train() {
   printf("Training has taken %.5f seconds\n", t2.get_time());
 
   if (config->save_model) saveModel(config->model_n_iterations);
-  getTopFeatures();
-
+  if (config->save_importance) getTopFeatures();
 }
 
 /**
@@ -1118,7 +1116,7 @@ void BinaryMart::train() {
 
   if (config->save_model) saveModel(config->model_n_iterations);
 
-  getTopFeatures();
+  if (config->save_importance) getTopFeatures();
 }
 
 
@@ -1252,7 +1250,7 @@ void Mart::train() {
 
   if (config->save_model) saveModel(config->model_n_iterations);
 
-  getTopFeatures();
+  if (config->save_importance) getTopFeatures();
 
 }
 
@@ -1392,6 +1390,7 @@ void ABCMart::train() {
         tree->init(&hist, &buffer[0], &buffer[1], &feature_importance,
                    &(hessians[k * data->n_data]), &(residuals[k * data->n_data]),ids_tmp.data(),H_tmp.data(),R_tmp.data());
         tree->buildTree(&ids, &fids);
+        tree->updateFeatureImportance(m);
         updateF(k, tree);
         additive_trees[m][k] = std::unique_ptr<Tree>(tree);
       }
@@ -1493,6 +1492,7 @@ void ABCMart::train() {
           tree->init(&hist, &buffer[0], &buffer[1], &feature_importance,
                      &(hessians[k * data->n_data]), &(residuals[k * data->n_data]),ids_tmp.data(),H_tmp.data(),R_tmp.data());
           tree->buildTree(&ids, &fids);
+          tree->updateFeatureImportance(m);
           updateF(k, tree);
           additive_trees[m][k] = std::unique_ptr<Tree>(tree);
         }
@@ -1500,6 +1500,11 @@ void ABCMart::train() {
       }else{
         F = best_F;
         additive_trees[m].swap(best_trees);
+        for (int k = 0; k < K; ++k) {
+          if(k == base_classes[m])
+            continue;
+          additive_trees[m][k]->updateFeatureImportance(m);
+        }
       }
     }else{
       int b = base_classes[m];
@@ -1512,6 +1517,7 @@ void ABCMart::train() {
         tree->init(&hist, &buffer[0], &buffer[1], &feature_importance,
                    &(hessians[k * data->n_data]), &(residuals[k * data->n_data]),ids_tmp.data(),H_tmp.data(),R_tmp.data());
         tree->buildTree(&ids, &fids);
+        tree->updateFeatureImportance(m);
         updateF(k, tree);
         additive_trees[m][k] = std::unique_ptr<Tree>(tree);
       }
@@ -1535,7 +1541,7 @@ void ABCMart::train() {
   printf("Training has taken %.5f seconds\n", t2.get_time());
 
   if (config->save_model) saveModel(config->model_n_iterations);
-  getTopFeatures();
+  if (config->save_importance) getTopFeatures();
 }
 
 /**
@@ -1640,7 +1646,7 @@ void ABCMart::train_worst() {
   printf("Training has taken %.5f seconds\n", t2.get_time());
 
   if (config->save_model) saveModel(config->model_n_iterations);
-  getTopFeatures();
+  if (config->save_importance) getTopFeatures();
 
 }
 
@@ -1945,7 +1951,7 @@ void LambdaMart::train() {
   printf("Training has taken %.5f seconds\n", t2.get_time());
 
   if (config->save_model) saveModel(config->model_n_iterations);
-  getTopFeatures();
+  if (config->save_importance) getTopFeatures();
 
 }
 
@@ -2107,7 +2113,7 @@ void GBRank::train(){
   printf("Training has taken %.5f seconds\n", t2.get_time());
 
   if (config->save_model) saveModel(config->model_n_iterations);
-  getTopFeatures();
+  if (config->save_importance) getTopFeatures();
 }
 
 void GBRank::computeHessianResidual() {

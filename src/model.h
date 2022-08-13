@@ -85,7 +85,7 @@ class GradientBoosting {
   virtual double getLoss();
   virtual double getAUC();
   double getAUC(double* f_values, int k);
-  void getTopFeatures(int n = 10);
+  void getTopFeatures();
   virtual void init();
   std::vector<unsigned int> sample(int n, double sample_rate);
   void setupExperiment();

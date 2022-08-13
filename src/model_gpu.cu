@@ -1445,6 +1445,17 @@ void MartGPU::train() {
     copyBackTrees(config->model_n_iterations);
     saveModel(config->model_n_iterations);
   }
+  if (config->save_importance){
+    if (config->save_model == false){
+      copyBackTrees(config->model_n_iterations);
+    }
+    for(int m = 0;m < config->model_n_iterations;++m){
+      for(int k = 0;k < K;++k){
+        additive_trees[m][k]->updateFeatureImportance(m);
+      }
+    }
+    getTopFeatures();
+  }
   cudaDeviceSynchronize();
 }
 
@@ -1589,6 +1600,17 @@ void RegressionGPU::train() {
   if (config->save_model){
     copyBackTrees(config->model_n_iterations);
     saveModel(config->model_n_iterations);
+  }
+  if (config->save_importance){
+    if (config->save_model == false){
+      copyBackTrees(config->model_n_iterations);
+    }
+    for(int m = 0;m < config->model_n_iterations;++m){
+      for(int k = 0;k < K;++k){
+        additive_trees[m][k]->updateFeatureImportance(m);
+      }
+    }
+    getTopFeatures();
   }
   cudaDeviceSynchronize();
 }
@@ -1978,6 +2000,19 @@ void ABCMartGPU::train() {
   if (config->save_model){
     copyBackTrees(config->model_n_iterations);
     saveModel(config->model_n_iterations);
+  }
+  if (config->save_importance){
+    if (config->save_model == false){
+      copyBackTrees(config->model_n_iterations);
+    }
+    for(int m = 0;m < config->model_n_iterations;++m){
+      for(int k = 0;k < K;++k){
+        if(k == base_classes[m])
+          continue;
+        additive_trees[m][k]->updateFeatureImportance(m);
+      }
+    }
+    getTopFeatures();
   }
   cudaDeviceSynchronize();
 }

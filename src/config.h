@@ -115,6 +115,7 @@ class Config {
   bool save_log = true;
   bool save_model = true;
   bool save_prob = false;
+  bool save_importance = false;
 
   std::string experiment_folder = "./";
   std::string additional_files = "";
@@ -224,6 +225,7 @@ class Config {
     fwrite(&save_log, sizeof(bool), 1, fp);
     fwrite(&save_model, sizeof(bool), 1, fp);
     fwrite(&save_prob, sizeof(bool), 1, fp);
+    fwrite(&save_importance, sizeof(bool), 1, fp);
     saveString(experiment_folder, fp);
     saveString(additional_files, fp);
     saveString(additional_files_no_label, fp);
@@ -317,6 +319,7 @@ class Config {
     ret += fread(&save_log, sizeof(bool), 1, fp);
     ret += fread(&save_model, sizeof(bool), 1, fp);
     ret += fread(&save_prob, sizeof(bool), 1, fp);
+    ret += fread(&save_importance, sizeof(bool), 1, fp);
     loadString(str, fp);
     loadString(additional_files, fp);
     loadString(additional_files_no_label, fp);
@@ -379,6 +382,7 @@ class Config {
 * `-save_log`, 0/1 (default 0) whether save the runtime log to file\n\
 * `-save_model`, 0/1 (default 1)\n\
 * `-save_prob`, 0/1 (default 0) whether save the prediction probability for classification tasks\n\
+* `-save_importance`, 0/1 (default 0) whether save the feature importance in the training\n\
 * `-no_label`, 0/1 (default 0) It should only be enabled to output prediction file when the testing data has no label in test\n\
 * `-test_auc`, 0/1 (default 0) whether compute AUC in test\n\
 * `-stop_tolerance` (default 2e-14) It works for all non-regression tasks, e.g., classification. The training will stop when the total training loss is less than the stop tolerance.\n\
@@ -549,6 +553,8 @@ class Config {
         save_model = stob(value);
       } else if (key == "save_prob") {
         save_prob = stob(value);
+      } else if (key == "save_importance") {
+        save_importance = stob(value);
       } else if (key == "use_gpu") {
         use_gpu = stob(value);
       } else if (key == "use_omp") {
