@@ -408,6 +408,20 @@ class Config {
       }
       std::string value = (argv[i + 1]);
       if (key == "iter" || key == "more_iter") model_n_iter_cmd = true;
+      int offset = 0;
+      for(int j = 2;i + j < argc;++j){
+        std::string more_value = std::string(argv[i + j]);
+        std::string separator = "";
+        if(value.length() > 0 && value[value.length() - 1] != ',')
+          separator = ",";
+        if (more_value.length() > 0 && more_value[0] != '-'){
+          value += separator + more_value;
+          ++offset;
+        }else{
+          break;
+        }
+      }
+      i += offset;
       parse(key, value);
     }
     if (n_threads > 1)
