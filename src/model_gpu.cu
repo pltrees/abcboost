@@ -1451,6 +1451,7 @@ void MartGPU::train() {
     }
     for(int m = 0;m < config->model_n_iterations;++m){
       for(int k = 0;k < K;++k){
+        additive_trees[m][k]->feature_importance = &feature_importance;
         additive_trees[m][k]->updateFeatureImportance(m);
       }
     }
@@ -1607,6 +1608,7 @@ void RegressionGPU::train() {
     }
     for(int m = 0;m < config->model_n_iterations;++m){
       for(int k = 0;k < K;++k){
+        additive_trees[m][k]->feature_importance = &feature_importance;
         additive_trees[m][k]->updateFeatureImportance(m);
       }
     }
@@ -2009,6 +2011,7 @@ void ABCMartGPU::train() {
       for(int k = 0;k < K;++k){
         if(k == base_classes[m])
           continue;
+        additive_trees[m][k]->feature_importance = &feature_importance;
         additive_trees[m][k]->updateFeatureImportance(m);
       }
     }
