@@ -27,7 +27,7 @@ cmake -DOMP=ON ..
 make clean
 make
 ```
-Note that the default g++ on Mac may not support OpenMP.  To install, execute `brew install libomp` before running `cmake`.
+Note that the default g++ on Mac may not support OpenMP.  To install, execute `brew install libomp` before `cmake`.
 
 
 If we set `-DNATIVE=ON`, the compiler may better optimize the code according to specific native CPU instructions: 
@@ -36,7 +36,7 @@ cmake -DOMP=ON -DNATIVE=ON ..
 make clean
 make
 ```
-Again, we do not recommend to turn on this option on Mac. 
+We do not recommend to turn on this option on Mac. 
 
 
 To build ABCBoost with GPU support, install [NVIDIA CUDA Toolkits](https://developer.nvidia.com/cuda-downloads) and set the option `CUDA=ON`:

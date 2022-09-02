@@ -36,7 +36,7 @@ cmake -DOMP=ON -DNATIVE=ON ..
 make clean
 make
 ```
-同样，我们不建议在Mac系统中启用此选项。
+我们不建议在Mac系统中启用此选项。
 
 
 如要编译GPU版本的ABCBoost，请安装[NVIDIA CUDA Toolkits](https://developer.nvidia.com/cuda-downloads)并启用选项`CUDA=ON`:
