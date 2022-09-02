@@ -27,7 +27,7 @@ cmake -DOMP=ON ..
 make clean
 make
 ```
-Note that the default g++ on Mac may not support OpenMP.   
+Note that the default g++ on Mac may not support OpenMP.  To install, execute `brew install libomp` before running `cmake`.
 
 
 If we set `-DNATIVE=ON`, the compiler may better optimize the code according to specific native CPU instructions: 
@@ -78,7 +78,7 @@ which outputs two files: (1)  `comp_cpu.test.csv_regression_J20_v0.1_p2.testlog`
 The train/predict executables support multiple input data files. For example, we can use both `comp_cpu.train.csv` and `comp_cpu.test.csv` for training the model:
 
 ```
-./abcboost_train -method regression -lp 2 -data data/comp_cpu.train.csv,data/comp_cpu.test.csv -J 20 -v 0.1 
+./abcboost_train -method regression -lp 2 -data data/comp_cpu.train.csv data/comp_cpu.test.csv -J 20 -v 0.1 
 
 ```
 Note that the model is named accordingly only the first input data file, in this case, the model name is still `comp_cpu.train.libsvm_regression_J10_v0.1_p2.model`. 
@@ -155,8 +155,8 @@ Here we illustrate some common parameters and provide some examples:
 * `-v` learning rate (default 0.1)
 * `-search` searching size for the base class (default 2: we greedily choose the base classes according to the training loss). For example, 2 means we try the class with the greatest loss and the class with the second greatest loss as base class and pick the one with lower loss as the base class for the current iteration.
 * `-n_threads` number of threads (default 1) <strong>It can only be used when multi-thread is enabled. (Compile the code with `-DOMP=ON` in cmake.)</strong>
-* `-additional_files` using other files to do bin quantization besides the training data. File names are separated by `,`, e.g., `-additional_files file1,file2,file3`.
-* `-additional_files_no_label` using other unlabeled files to do bin quantization besides the training data. File names are separated by `,`, e.g., `-additional_files_no_label file1,file2,file3`.
+* `-additional_files` using other files to do bin quantization besides the training data. File names are separated by `,`, e.g., `-additional_files file1 file2 file3`.
+* `-additional_files_no_label` using other unlabeled files to do bin quantization besides the training data. File names are separated by space or `,`, e.g., `-additional_files_no_label file1 file2 file3`.
 
 To train the model with 2000 iterations, 16 leaves per tree and 0.08 learning rate:
 ```
@@ -178,7 +178,7 @@ The labels in the specified additional files are not used in the training. Only 
 * `-data_min_bin_size` minimum size of the bin
 * `-data_sparsity_threshold`
 * `-data_max_n_bins` max number of bins (default 1000)
-* `-data_path, -data` path to train/test data. We can specify multiple data in `-data`. The file names are separated by comma. For example, `-data file1,file2,file3`
+* `-data_path, -data` path to train/test data. We can specify multiple data in `-data`. The file names are separated by space or comma. For example, `-data file1 file2 file3`
 #### Tree related:
 * `-tree_clip_value` gradient clip (default 50)
 * `-tree_damping_factor`, regularization on denominator (default 1e-100)
@@ -394,7 +394,7 @@ We provide an illustrative example: [Census-Income (KDD) Data Set](https://archi
 
 Executing the following terminal command will generate cleaned `csv` files for both training data `census-income.data` and testing data `census-income.test`: 
 ```
-./abcboost_clean -data data/census-income.data,data/census-income.test -label_column -1 -cleaned_format csv  
+./abcboost_clean -data data/census-income.data data/census-income.test -label_column -1 -cleaned_format csv  
 ```
 `-label_column -1` indicate the `last` column is for the labels.  We can replace `csv` by `libsvm` if we hope to store the data in a different format. The default choice is `libsvm`.  The following is the end of the output of the above command: 
 
@@ -416,7 +416,7 @@ Note that the above two ways may not necessarily generate the same results becau
 In summary, `abcboost_clean` has a variety of functionalities. In the following, we list the options and explanations. 
 
 
-* `-data` the data files to clean. We may clean the training, testing, validating dataset together by specifying multiple file names in `-data` (file names are separated by comma).
+* `-data` the data files to clean. We may clean the training, testing, validating dataset together by specifying multiple file names in `-data` (file names are separated by space or comma).
 * `-ignore_columns` the columns to ignore in the CSV file. Multiple columns can be separated by commas, e.g., `-ignore_columns 1,3,-2` ignores the first, third, and the second last columns. The index is one-based. There should be no space between the comma and the column indices
 * `-ignore_rows` the rows to ignore in the CSV file. Multiple rows can be separated by commas
 * `-label_column` (default 1) the column contains the label

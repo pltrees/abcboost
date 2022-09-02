@@ -27,7 +27,7 @@ cmake -DOMP=ON ..
 make clean
 make
 ```
-请注意，Mac上默认的g++可能不支持OpenMP。
+请注意，Mac上默认的g++可能不支持OpenMP。 如果需要安装，在`cmake`之前请先执行 `brew install libomp`。
 
 
 如果我们设置`-DNATIVE=ON`，那么编译器可以根据本机CPU指令集来更好地优化代码: 
@@ -77,7 +77,7 @@ make
 `abcboost_train`和`abcboost_predict`这两个可执行文件支持多个输入文件。例如，我们可以同时使用`comp_cpu.train.csv`和`comp_cpu.test.csv`来训练模型:
 
 ```
-./abcboost_train -method regression -lp 2 -data data/comp_cpu.train.csv,data/comp_cpu.test.csv -J 20 -v 0.1 
+./abcboost_train -method regression -lp 2 -data data/comp_cpu.train.csv data/comp_cpu.test.csv -J 20 -v 0.1 
 
 ```
 生成的模型文件只按照第一个文件名命名，在本例中，模型文件名依然是`comp_cpu.train.libsvm_regression_J10_v0.1_p2.model`。
@@ -151,8 +151,8 @@ CUDA_VISIBLE_DEVICES=0 ./abcboost_train -method robustlogit -data data/ijcnn1.tr
 * `-v` 学习率 (默认值 0.1)
 * `-search` 搜索基类时搜索类的数量 (默认值 2: 我们根据训练损失贪心选择基类). 例如，2表示我们尝试将损失最大的类和损失第二大的类作为基类，并选择损失较低的类作为当前迭代的基类。
 * `-n_threads` 线程数 (默认值 1) <strong>仅在启用多线程编译的可执行文件中使用。(在编译前打开cmake的`-DOMP=ON`选项。)</strong>
-* `-additional_files` 使用训练数据外的其他文件进行装箱量化。文件名用`,`分隔，例如，`-additional_files file1,file2,file3`。
-* `-additional_files_no_label` 使用训练数据外的其他不包含类标签的文件进行装箱量化。文件名用`,`分隔，例如，`-additional_files_no_label file1,file2,file3`。
+* `-additional_files` 使用训练数据外的其他文件进行装箱量化。文件名用空格或`,`分隔，例如，`-additional_files file1 file2 file3`。
+* `-additional_files_no_label` 使用训练数据外的其他不包含类标签的文件进行装箱量化。文件名用空格或`,`分隔，例如，`-additional_files_no_label file1 file2 file3`。
 
 以2000次迭代、每棵树16个叶子和0.08的学习率训练模型:
 ```
@@ -174,7 +174,7 @@ CUDA_VISIBLE_DEVICES=0 ./abcboost_train -method robustlogit -data data/ijcnn1.tr
 * `-data_min_bin_size` 装箱量化中bin的最小大小
 * `-data_sparsity_threshold` 数据稀疏度阈值
 * `-data_max_n_bins` 最大bin数量 (默认值 1000)
-* `-data_path, -data` 训练和测试数据的路径。我们可以在`-data`中指定多个文件，文件名用`,`分隔。例如: `-data file1,file2,file3`
+* `-data_path, -data` 训练和测试数据的路径。我们可以在`-data`中指定多个文件，文件名用空格或`,`分隔。例如: `-data file1 file2 file3`
 #### 树相关:
 * `-tree_clip_value` 梯度裁剪值 (默认值 50)
 * `-tree_damping_factor`, 分母正则化参数 (默认值 1e-100)
@@ -391,7 +391,7 @@ res = abcboost.test(testY,testX,model)
 
 执行以下命令将为训练数据`census-income.data`和测试数据`census-income.test`生成清理后的`csv`文件:
 ```
-./abcboost_clean -data data/census-income.data,data/census-income.test -label_column -1 -cleaned_format csv  
+./abcboost_clean -data data/census-income.data data/census-income.test -label_column -1 -cleaned_format csv  
 ```
 `-label_column -1`表示`最后`一列为标签。如果我们希望以不同格式储存数据，可以将`csv`替换为`libsvm`。默认选择为`libsvm`。以下是上述命令输出的结尾: 
 
