@@ -1152,7 +1152,7 @@ void Data::cleanCSV(){
   for(int i = 0;i < data_header.n_feats;++i){
     if(is_categorical[i]){
       columns_map[i] = cnt_numeric + curr_categorical;
-      curr_categorical += val_map[i].size();
+      curr_categorical += val_map[i].size() + 1;
       int curr = 0;
       for(const auto& p : val_map[i]){
         category_map[i][p] = curr + 1; // since the missing category will be 0
