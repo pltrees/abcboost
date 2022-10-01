@@ -110,6 +110,7 @@ class Config {
   std::string missing_substitution = "0";
   std::string cleaned_format = "libsvm";
   std::string clean_info = "";
+  std::string normalize = "";
 
   // Others
   bool save_log = true;
@@ -155,6 +156,12 @@ class Config {
       // config.txt not found: using default parameters values as in config.h
       // std::cout << "Unable to open config file." << '\n';
     }
+  }
+
+  inline static std::string to_lower(std::string& s){
+    std::string ret = s;
+    std::transform(s.begin(),s.end(),ret.begin(),[](unsigned char c){ return std::tolower(c); });
+    return ret;
   }
 
   void saveString(std::string str, FILE* fp) {
@@ -525,6 +532,12 @@ class Config {
         cleaned_format = value;
       } else if (key == "cleaninfo") {
         clean_info = value;
+      } else if (key == "normalize") {
+        normalize = to_lower(value);
+        if(normalize != "zero_to_one" && normalize != "minus_one_to_one" && normalize != "gaussian" && normalize != "none"){
+          printf("[Error] unknown normalize method (%s), we support zero_to_one, minus_one_to_one, gaussian, and none\n",value.c_str());
+          throw std::runtime_error("Unsupported argument exception");
+        }
       } else
           // others
           if (key == "experiment_folder") {
@@ -631,6 +644,9 @@ class Config {
   void sanityCheck() {
     if(model_mode == "clean" && additional_files != ""){
       printf("[Warning] ignored -additional_files in abcboost_clean. Use comma separated file names in -data\n");
+    }
+    if(model_mode == "clean" && clean_info != "" && normalize != ""){
+      printf("[Warning] ignored normalize parameter in abcboost_clean when cleaninfo is specified\n");
     }
   }
 

@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <functional>
 
 #include "config.h"
 #include "data.h"
@@ -1032,6 +1033,7 @@ void Data::cleanCSV(){
   std::vector<std::set<std::string>> global_labels(T);
   std::vector<std::vector<std::set<std::string>>> global_val_map(T);
   std::vector<std::vector<std::set<std::string>>> global_numeric_val_map(T);
+  std::vector<std::vector<ColumnStat>> global_column_stat(T);
   
 #pragma omp parallel
   {
@@ -1041,6 +1043,7 @@ void Data::cleanCSV(){
     std::set<std::string>& local_labels = global_labels[t];
     std::vector<std::set<std::string>>& local_val_map = global_val_map[t];
     std::vector<std::set<std::string>>& local_numeric_val_map = global_numeric_val_map[t];
+    std::vector<ColumnStat>& local_column_stat = global_column_stat[t];
 
     for (int i = start; i < end; ++i) {
       if(invector(i + one_based,ignore_rows))
@@ -1071,6 +1074,9 @@ void Data::cleanCSV(){
             continue;
           }
           if(is_numeric(val)){
+            if(j >= local_column_stat.size())
+              local_column_stat.resize(j + 1);
+            local_column_stat[j].update(stod(val));
             if(j >= local_numeric_val_map.size())
               local_numeric_val_map.resize(j + 1);
             if(local_numeric_val_map[j].size() + 1 < category_limit)
@@ -1096,11 +1102,14 @@ void Data::cleanCSV(){
   for(int j = 0;j < data_header.n_feats;++j){
     global_val_map[0].resize(data_header.n_feats);
     global_numeric_val_map[0].resize(data_header.n_feats);
+    global_column_stat[0].resize(data_header.n_feats);
     for(int t = 1;t < T;++t){
       if(j < global_val_map[t].size())
         global_val_map[0][j].insert(global_val_map[t][j].begin(),global_val_map[t][j].end());
       if(j < global_numeric_val_map[t].size())
         global_numeric_val_map[0][j].insert(global_numeric_val_map[t][j].begin(),global_numeric_val_map[t][j].end());
+      if(j < global_column_stat[t].size())
+        global_column_stat[0][j].merge(global_column_stat[t][j]);
     }
   }
   // mapping construction done
@@ -1108,6 +1117,7 @@ void Data::cleanCSV(){
   std::set<std::string>& labels = global_labels[0];
   std::vector<std::set<std::string>>& val_map = global_val_map[0];
   std::vector<std::set<std::string>>& numeric_val_map = global_numeric_val_map[0];
+  column_stat = global_column_stat[0];
 
   numeric_labels = true;
   for(const auto& p : labels){
@@ -1277,6 +1287,35 @@ void Data::cleanCSVwithInfo(){
   printf("Cleaning summary: | # data: %d | # converted features: %d\n", output_lines, output_columns);
 }
 
+
+double Data::normalize_zero_to_one(int feature, double val){
+  double denominator = column_stat[feature].max - column_stat[feature].min;
+  if(denominator == 0)
+    return 1;
+  double numerator = val - column_stat[feature].min;
+  double ret = numerator / denominator;
+  if(ret < 0)
+    ret = 0;
+  if(ret > 1)
+    ret = 1;
+  return ret;
+}
+
+double Data::normalize_minus_one_to_one(int feature, double val){
+  return normalize_zero_to_one(feature,val) * 2 - 1;
+}
+
+double Data::normalize_gaussian(int feature, double val){
+  double stddev = column_stat[feature].stddev();
+  if(stddev == 0)
+    return 1;
+  return (val - column_stat[feature].avg()) / stddev;
+}
+
+double Data::normalize_null(int feature, double val){
+  return val;
+}
+
 void Data::clean_one_file(std::string path,const std::vector<std::string>& buffer,int begin_line,int end_line,int one_based,std::vector<int>& ignore_rows,int& output_lines){
   const bool output_libsvm = (config->cleaned_format != "csv");
   std::string output_path = "";
@@ -1285,6 +1324,19 @@ void Data::clean_one_file(std::string path,const std::vector<std::string>& buffe
   else
     output_path = path + "_cleaned.csv";
   FILE* fp = fopen(output_path.c_str(),"w");
+  std::function<double(int,int)> normalize_func;
+  if(config->normalize == "" || config->normalize == "none"){
+    normalize_func = std::bind(&Data::normalize_null,this,std::placeholders::_1,std::placeholders::_2);
+  }else if(config->normalize == "zero_to_one"){
+    normalize_func = std::bind(&Data::normalize_zero_to_one,this,std::placeholders::_1,std::placeholders::_2);
+  }else if(config->normalize == "minus_one_to_one"){
+    normalize_func = std::bind(&Data::normalize_minus_one_to_one,this,std::placeholders::_1,std::placeholders::_2);
+  }else if(config->normalize == "gaussian"){
+    normalize_func = std::bind(&Data::normalize_gaussian,this,std::placeholders::_1,std::placeholders::_2);
+  }else{
+    printf("[Error] unknown normalize method (%s), we support zero_to_one, minus_one_to_one, and gaussian\n",config->normalize.c_str());
+    exit(1);
+  }
 
   missing_substitution = stod(config->missing_substitution);
   for(int i = begin_line;i < end_line;++i){
@@ -1336,6 +1388,7 @@ void Data::clean_one_file(std::string path,const std::vector<std::string>& buffe
           }else{
             try{
               v = stod(val);
+              v = normalize_func(j,v);
             }catch(...){
               v = missing_substitution;
             }
@@ -1397,6 +1450,8 @@ void Data::serializeCleanInfo(FILE* fp){
   }
   fwrite(&output_columns, sizeof(int), 1, fp);
   fwrite(&label_column, sizeof(int), 1, fp);
+  Utils::serialize_vector(fp,column_stat);
+  Utils::serialize(fp,config->normalize);
 }
 
 void Data::deserializeCleanInfo(FILE* fp){
@@ -1435,6 +1490,8 @@ void Data::deserializeCleanInfo(FILE* fp){
   }
   fread(&output_columns, sizeof(int), 1, fp);
   fread(&label_column, sizeof(int), 1, fp);
+  column_stat = Utils::deserialize_vector<ColumnStat>(fp);
+  config->normalize = Utils::deserialize_str(fp);
 }
 
 inline std::string Data::trim(const std::string& str){
@@ -1469,7 +1526,5 @@ inline std::string Data::to_lower(std::string& s){
   std::transform(s.begin(),s.end(),ret.begin(),[](unsigned char c){ return std::tolower(c); });
   return ret;
 }
-
-
 
 }  // namespace ABCBoost

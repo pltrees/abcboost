@@ -412,6 +412,12 @@ In the above command, multiple files are specified in `-data`. The `census-incom
 ```
 Note that the above two ways may not necessarily generate the same results because the additional files may contain additional categories. In this particular example, one can check that the results are the same.  
 
+We also provide a normalization parameter `-normalize` in `./abcboost_clean`: `zero_to_one`, `minus_one_to_one`, `gaussian`. For example:
+```
+./abcboost_clean -data data/census-income.data -label_column -1 -normalize zero_to_one
+./abcboost_clean -data data/census-income.test -cleaninfo data/census-income.data.cleaninfo -cleaned_format csv 
+```
+The `-normalize` parameter will be saved in the `.cleaninfo` file. We do not need to specify it again if `-cleaninfo` is set.
 
 In summary, `abcboost_clean` has a variety of functionalities. In the following, we list the options and explanations. 
 
@@ -427,6 +433,7 @@ In summary, `abcboost_clean` has a variety of functionalities. In the following,
 * `-missing_substitution` (default 0) we will substitute all missing values with this specified number
 * `-cleaned_format` (default libsvm) the output format of the cleaned data. It can be specified to csv or libsvm. We suggest to use libsvm for a compact representation of the one-hot encoded categorical values.
 * `-cleaninfo` specifies the `.cleaninfo` file. If this is unspecified. We will generate a file with a `.cleaninfo` suffix that contains the cleaning information, e.g., label columns, categorical mapping, etc. Specifying `-cleaninfo` enables us to clean other data with the same mapping of the previous cleaning. For example, we clean the training data first. And later we can use the `.cleaninfo` of the training data to clean the testing data to ensure they have the same feature mapping. Note that the `-ignore_rows` is not saved in the `.cleaninfo`.
+* `-normalize` (default none) specifies the method to normalize data. Options: `zero_to_one`, `minus_one_to_one`, and `gaussian`.
 
 ## References
 * Ping Li. [ABC-Boost: Adaptive Base Class Boost for Multi-Class Classification](https://icml.cc/Conferences/2009/papers/417.pdf). ICML 2009.

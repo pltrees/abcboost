@@ -17,6 +17,7 @@
 #include <unordered_map>
 #include <vector>
 #include <set>
+#include <cmath>
 
 #include "config.h"
 #include "utils.h"
@@ -86,6 +87,53 @@ struct DataHeader {
   }
 };
 
+
+class ColumnStat{
+public:
+  double min = std::numeric_limits<double>::max();;
+  double max = std::numeric_limits<double>::min();;
+  double sum = 0;
+  double sum2 = 0;
+  int cnt = 0;
+  
+  void clear(){
+    min = std::numeric_limits<double>::max();;
+    max = std::numeric_limits<double>::min();;
+    sum = 0;
+    sum2 = 0;
+    cnt = 0;
+  }
+
+  void update(double x){
+    if(x < min)
+      min = x;
+    if(x > max)
+      max = x;
+    sum += x;
+    sum2 += x * x;
+    ++cnt;
+  }
+
+  void merge(const ColumnStat& cs){
+    if(cs.min < min)
+      min = cs.min;
+    if(cs.max > max)
+      max = cs.max;
+    sum += cs.sum;
+    sum2 += cs.sum2;
+    cnt += cs.cnt;
+  }
+
+  double avg(){
+    return sum / cnt;
+  }
+
+  double stddev(){
+    double tmp = sum / cnt;
+    return sqrt(sum2 / cnt - tmp * tmp);
+  }
+};
+
 class Data {
  public:
   DataHeader data_header;
@@ -145,6 +193,8 @@ class Data {
   std::vector<std::unordered_map<std::string,int>> category_map;
   int output_columns = 0;
   int label_column = 1;
+  std::string normalize = "";
+  std::vector<ColumnStat> column_stat;
 
  private:
   void adaptiveQuantization();
@@ -182,6 +232,11 @@ class Data {
   std::vector<double> find_bin_fixed_size_binary_search_stratify(
       std::vector<std::vector<double>>& fv_strata, int max_n_bins,
       size_t n_distinct);
+
+  double normalize_zero_to_one(int feature, double val);
+  double normalize_minus_one_to_one(int feature, double val);
+  double normalize_gaussian(int feature, double val);
+  double normalize_null(int feature, double val);
 };
 
 }  // namespace ABCBoost

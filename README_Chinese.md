@@ -409,6 +409,13 @@ Cleaning summary: | # data: 299285 | # numeric features 14 | # categorical featu
 ```
 请注意，因为额外文件中可能包含额外的类别特征，上述的两种方法可能产生不同的输出文件。
 
+我们还提供了用于归一化数据的选项`-normalize`： `zero_to_one`, `minus_one_to_one`, `gaussian`。例如:
+```
+./abcboost_clean -data data/census-income.data -label_column -1 -normalize zero_to_one
+./abcboost_clean -data data/census-income.test -cleaninfo data/census-income.data.cleaninfo -cleaned_format csv 
+```
+参数`-normalize`会被保存在`.cleaninfo`文件中，在已经指定了`-cleaninfo`的情况下，我们不需要额外指定`-normalize`选项。
+
 
 总之，`abcboost_clean`具有许多功能，接下来我们列出了诸多选项和其对应的解释: 
 
@@ -424,6 +431,7 @@ Cleaning summary: | # data: 299285 | # numeric features 14 | # categorical featu
 * `-missing_substitution` (默认值 0) 我们会将所有缺失值替换为此数字
 * `-cleaned_format` (默认值 libsvm) 清理后的数据集输出格式。可以将其指定为csv或libsvm。我们建议使用libsvm格式，libsvm格式对于one-hot编码有更紧凑的表示。
 * `-cleaninfo` 指定`.cleaninfo`文件。如果这个文件没被指定，我们会生成一个后缀为`.cleaninfo`的文件，此文件包含了数据清理的信息，例如标签列、类别特征的映射等。通过指定`-cleaninfo`，我们可以使用与上次清理相同的映射来清理其他数据。例如，我们首先清理训练数据，然后使用训练数据的`.cleaninfo`文件来清理测试数据以确保它们具有相同的特征映射。请注意`-ignore_rows`的值未被保存在`.cleaninfo`中。
+* `-normalize` (默认值 none) 指定归一化方法。可选方法有`zero_to_one`、`minus_one_to_one` 和 `gaussian`。
 
 ## 参考文献
 * Ping Li. [ABC-Boost: Adaptive Base Class Boost for Multi-Class Classification](https://icml.cc/Conferences/2009/papers/417.pdf). ICML 2009.
