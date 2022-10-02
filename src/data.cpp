@@ -1291,7 +1291,7 @@ void Data::cleanCSVwithInfo(){
 double Data::normalize_zero_to_one(int feature, double val){
   double denominator = column_stat[feature].max - column_stat[feature].min;
   if(denominator == 0)
-    return 1;
+    return 0;
   double numerator = val - column_stat[feature].min;
   double ret = numerator / denominator;
   if(ret < 0)
@@ -1302,6 +1302,9 @@ double Data::normalize_zero_to_one(int feature, double val){
 }
 
 double Data::normalize_minus_one_to_one(int feature, double val){
+  double denominator = column_stat[feature].max - column_stat[feature].min;
+  if(denominator == 0)
+    return 0;
   return normalize_zero_to_one(feature,val) * 2 - 1;
 }
 
