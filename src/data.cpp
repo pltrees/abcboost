@@ -1327,7 +1327,7 @@ void Data::clean_one_file(std::string path,const std::vector<std::string>& buffe
   else
     output_path = path + "_cleaned.csv";
   FILE* fp = fopen(output_path.c_str(),"w");
-  std::function<double(int,int)> normalize_func;
+  std::function<double(int,double)> normalize_func;
   if(config->normalize == "" || config->normalize == "none"){
     normalize_func = std::bind(&Data::normalize_null,this,std::placeholders::_1,std::placeholders::_2);
   }else if(config->normalize == "zero_to_one"){
