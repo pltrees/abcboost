@@ -439,7 +439,7 @@ Cleaning summary: | # data: 299285 | # numeric features 14 | # categorical featu
 * Ping Li and Weijie Zhao. [Fast ABC-Boost: A Unified Framework for Selecting the Base Class in Multi-Class Classification](https://arxiv.org/pdf/2205.10927.pdf).  arXiv:2205.10927 2022.
 * Ping Li and Weijie Zhao. [Package for Fast ABC-Boost](https://arxiv.org/pdf/2207.08770.pdf).  arXiv:2207.08770, 2022.
 * Ping Li and Weijie Zhao. [pGMM Kernel Regression and Comparisons with Boosted Trees](https://arxiv.org/pdf/2207.08667.pdf).   arXiv:2207.08667, 2022.
-* Lecture notes on trees & boosting (pages 14-77) [www.stat.rutgers.edu/home/pingli/doc/PingLiTutorial.pdf](www.stat.rutgers.edu/home/pingli/doc/PingLiTutorial.pdf)
+* Lecture notes on trees & boosting (pages 14-77) [https://statweb.rutgers.edu/pingli/doc/PingLiTutorial.pdf](https://statweb.rutgers.edu/pingli/doc/PingLiTutorial.pdf)
 
 
 ## 版权和许可
