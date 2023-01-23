@@ -1140,7 +1140,7 @@ void Data::cleanCSV(){
     if(invector(i + one_based,additional_categorical_columns) || invector(i - (int)data_header.n_feats,additional_categorical_columns)){
       is_categorical[i] = 1;
     }else if(val_map[i].size() > 0){
-      if(val_map[i].size() + numeric_val_map[i].size() >= category_limit){
+      if(val_map[i].size() + numeric_val_map[i].size() > category_limit){
         printf("[Warning] found a very large category in column %d, %zu unique non-numeric values, %zu+ unique numeric values. We will treat this column as numeric and regard all non-numeric ones as missing. You can specifiy this column in -additional_categorical_columns to make it all categorical\n",i + one_based,val_map[i].size(),numeric_val_map[i].size());
         is_categorical[i] = 0;
       }else{
