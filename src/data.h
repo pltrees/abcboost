@@ -180,7 +180,7 @@ class Data {
   // for cleaning:
   void cleanCSV();
   void cleanCSVwithInfo();
-  void clean_one_file(std::string path,const std::vector<std::string>& buffer,int begin_line,int end_line,int one_based,std::vector<int>& ignore_rows,int& output_lines);
+  void clean_one_file(std::string path,const std::vector<std::string>& buffer,int begin_line,int end_line,int one_based,std::vector<int>& ignore_rows,int& output_lines,bool no_label = false);
   void serializeCleanInfo(FILE* fp);
   void deserializeCleanInfo(FILE* fp);
   std::vector<int> columns_map;

@@ -960,6 +960,15 @@ void Data::constructAuxData(){
 
 void Data::cleanCSV(){
   std::vector<std::string> all_files = Config::split(config->data_path);
+  bool no_label = false;
+  if(config->data_no_label != ""){
+    all_files = Config::split(config->data_no_label);
+    if(config->data_path != ""){
+      fprintf(stderr,"[WARN] Found -data_no_label specified. Ignoring -data");
+    }
+    no_label = true;
+    config->label_column = 1 << 30; // a dummy number which we assume it will never exist in real datasets
+  }
   for(auto p : all_files){
     if (!doesFileExist(p) && config->from_wrapper == false) {
       fprintf(stderr, "[ERROR] Data file (%s) does not exist!\n",p.c_str());
@@ -1180,7 +1189,7 @@ void Data::cleanCSV(){
   int output_lines = 0;
   for(int path_iter = 0;path_iter < all_files.size();++path_iter){
     auto path = all_files[path_iter];
-    clean_one_file(path,buffer,curr_line,lines_offset[path_iter],one_based,ignore_rows,output_lines);
+    clean_one_file(path,buffer,curr_line,lines_offset[path_iter],one_based,ignore_rows,output_lines,no_label);
     curr_line = lines_offset[path_iter];
   }
 
@@ -1213,6 +1222,15 @@ void Data::cleanCSV(){
 
 void Data::cleanCSVwithInfo(){
   std::vector<std::string> all_files = Config::split(config->data_path);
+  bool no_label = false;
+  if(config->data_no_label != ""){
+    all_files = Config::split(config->data_no_label);
+    if(config->data_path != ""){
+      fprintf(stderr,"[WARN] Found -data_no_label specified. Ignoring -data");
+    }
+    no_label = true;
+    config->label_column = 1 << 30; // a dummy number which we assume it will never exist in real datasets
+  }
   for(auto p : all_files){
     if (!doesFileExist(p) && config->from_wrapper == false) {
       fprintf(stderr, "[ERROR] Data file (%s) does not exist!\n",p.c_str());
@@ -1280,7 +1298,7 @@ void Data::cleanCSVwithInfo(){
   int output_lines = 0;
   for(int path_iter = 0;path_iter < all_files.size();++path_iter){
     auto path = all_files[path_iter];
-    clean_one_file(path,buffer,curr_line,lines_offset[path_iter],one_based,ignore_rows,output_lines);
+    clean_one_file(path,buffer,curr_line,lines_offset[path_iter],one_based,ignore_rows,output_lines,no_label);
     curr_line = lines_offset[path_iter];
   }
 
@@ -1319,7 +1337,7 @@ double Data::normalize_null(int feature, double val){
   return val;
 }
 
-void Data::clean_one_file(std::string path,const std::vector<std::string>& buffer,int begin_line,int end_line,int one_based,std::vector<int>& ignore_rows,int& output_lines){
+void Data::clean_one_file(std::string path,const std::vector<std::string>& buffer,int begin_line,int end_line,int one_based,std::vector<int>& ignore_rows,int& output_lines,bool no_label){
   const bool output_libsvm = (config->cleaned_format != "csv");
   std::string output_path = "";
   if(output_libsvm)
@@ -1402,21 +1420,32 @@ void Data::clean_one_file(std::string path,const std::vector<std::string>& buffe
     }
     std::sort(kv.begin(),kv.end());
     if(output_libsvm){
-      fprintf(fp,"%g",label);
+      if(no_label == false)
+        fprintf(fp,"%g",label);
       for(const auto& p : kv){
         if(p.second != 0)
           fprintf(fp," %d:%g",p.first + 1,p.second);
       }
       fprintf(fp,"\n");
     }else{
-      fprintf(fp,"%g",label);
+      if(no_label == false)
+        fprintf(fp,"%g",label);
       int p = 0;
       for(int i = 0;i < output_columns;++i){
-        if(p < kv.size() && kv[p].first == i){
-          fprintf(fp,",%g",kv[p].second);
-          ++p;
+        if(no_label == true && i == 0){
+          if(p < kv.size() && kv[p].first == i){
+            fprintf(fp,"%g",kv[p].second);
+            ++p;
+          }else{
+            fprintf(fp,"%g",missing_substitution);
+          }
         }else{
-          fprintf(fp,",%g",missing_substitution);
+          if(p < kv.size() && kv[p].first == i){
+            fprintf(fp,",%g",kv[p].second);
+            ++p;
+          }else{
+            fprintf(fp,",%g",missing_substitution);
+          }
         }
       }
       fprintf(fp,"\n");

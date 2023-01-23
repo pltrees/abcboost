@@ -111,6 +111,7 @@ class Config {
   std::string cleaned_format = "libsvm";
   std::string clean_info = "";
   std::string normalize = "";
+  std::string data_no_label = "";
 
   // Others
   bool save_log = true;
@@ -532,6 +533,8 @@ class Config {
         cleaned_format = value;
       } else if (key == "cleaninfo") {
         clean_info = value;
+      } else if (key == "data_no_label") {
+        data_no_label = value;
       } else if (key == "normalize") {
         normalize = to_lower(value);
         if(normalize != "zero_to_one" && normalize != "minus_one_to_one" && normalize != "gaussian" && normalize != "none"){
